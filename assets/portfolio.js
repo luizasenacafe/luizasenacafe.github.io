@@ -19,6 +19,6 @@ motionButton.addEventListener('click', () => setMotion(!document.body.classList.
 preference.addEventListener('change', event => setMotion(event.matches));
 document.querySelector('#copy-email').addEventListener('click', async () => {
   const status = document.querySelector('#copy-status');
-  try { await navigator.clipboard.writeText('luizan12@gmail.com'); status.textContent = 'E-mail copiado. Vamos conversar!'; }
-  catch { status.textContent = 'Você pode copiar este endereço: luizan12@gmail.com'; }
+  try { await navigator.clipboard.writeText('luiizan12@gmail.com'); status.textContent = 'E-mail copiado. Vamos conversar!'; }
+  catch { status.textContent = 'Você pode copiar este endereço: luiizan12@gmail.com'; }
 });
