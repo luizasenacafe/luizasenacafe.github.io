@@ -13,7 +13,7 @@ filters.forEach(button => button.addEventListener('click', () => {
 }));
 const motionButton = document.querySelector('#motion-toggle');
 const preference = window.matchMedia('(prefers-reduced-motion: reduce)');
-function setMotion(paused) { document.body.classList.toggle('motion-paused', paused); motionButton.setAttribute('aria-pressed', String(paused)); motionButton.setAttribute('aria-label', paused ? 'Ativar animações' : 'Pausar animações'); motionButton.textContent = paused ? '▷ Ativar GIFs' : 'Ⅱ Pausar GIFs'; }
+function setMotion(paused) { document.body.classList.toggle('motion-paused', paused); motionButton.setAttribute('aria-pressed', String(paused)); motionButton.setAttribute('aria-label', paused ? 'Ativar animações' : 'Pausar animações'); motionButton.textContent = paused ? '▷ Ativar animações' : 'Ⅱ Pausar animações'; }
 setMotion(preference.matches);
 motionButton.addEventListener('click', () => setMotion(!document.body.classList.contains('motion-paused')));
 preference.addEventListener('change', event => setMotion(event.matches));
