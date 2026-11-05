@@ -13,8 +13,8 @@ window.addEventListener('pointermove', (event) => {
 
   cancelAnimationFrame(frame);
   frame = requestAnimationFrame(() => {
-    background.style.setProperty('--ranger-x', (event.clientX / innerWidth - 0.5) * 48 + 'px');
-    background.style.setProperty('--ranger-y', (event.clientY / innerHeight - 0.5) * 36 + 'px');
+    background.style.setProperty('--ranger-x', event.clientX + 'px');
+    background.style.setProperty('--ranger-y', event.clientY + 'px');
   });
 }, { passive: true });
 

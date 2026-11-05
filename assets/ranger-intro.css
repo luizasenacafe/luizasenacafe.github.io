@@ -1,10 +1,46 @@
 .ranger-background {
-  background-image: radial-gradient(ellipse at center, #d5ef8870, transparent 58%),
-    radial-gradient(circle, #36554228 1px, transparent 1.5px);
-  background-size: 120vw 100vh, 24px 24px;
-  background-position: calc(50% + var(--ranger-x, 0px)) calc(0px + var(--ranger-y, 0px)),
-    var(--ranger-x, 0px) var(--ranger-y, 0px);
+  background-color: #172c22;
+  background-image:
+    radial-gradient(circle clamp(220px, 37vw, 550px) at var(--ranger-x, 68vw) var(--ranger-y, 35vh),
+      #d5ef889e 0%, #9db65b70 20%, #587b4160 48%, transparent 100%),
+    radial-gradient(circle, #d5ef8845 1px, transparent 1.6px);
+  background-size: 100vw 100vh, 24px 24px;
   background-attachment: fixed;
+  color: var(--paper);
+}
+.ranger-background .site-header,
+.ranger-background .welcome-header,
+.ranger-background .hero-footnote { border-color: #b5c7a37a; }
+.ranger-background .welcome h1 em,
+.ranger-background .hero h1 em,
+.ranger-background .about h2 em,
+.ranger-background .projects h2 em,
+.ranger-background .philosophy h2 em { color: var(--lime); }
+.ranger-background .hero h1 .outline { -webkit-text-stroke-color: var(--lime); }
+.ranger-background .hero-copy,
+.ranger-background .welcome-copy,
+.ranger-background .site-header,
+.ranger-background .about,
+.ranger-background .projects > .section-heading,
+.ranger-background .philosophy { text-shadow: 0 1px 4px #0c1d14; }
+.ranger-background .button,
+.ranger-background .project-card { text-shadow: none; }
+.ranger-background .project-card,
+.ranger-background .skill-grid article,
+.ranger-background .skip { color: var(--ink); }
+.ranger-background .nav-contact { border-color: currentColor; }
+.ranger-background .site-header a:hover,
+.ranger-background .welcome .text-link:hover,
+.ranger-background .hero .text-link:hover,
+.ranger-background .philosophy .text-link:hover { color: var(--lime); }
+.wordmark .wordmark-dash {
+  display: inline-block;
+  width: .36em;
+  height: .12em;
+  padding: 0;
+  margin: 0 .2em .18em;
+  background: var(--orange);
+  transform: skewX(-24deg);
 }
 .welcome-header, .welcome {
   width: min(1200px, 100% - 48px);
@@ -50,6 +86,13 @@
 @media (max-width: 740px) {
   .welcome { min-height: auto; grid-template-columns: 1fr; }
 }
-@media (prefers-reduced-motion: reduce) {
-  .ranger-background { background-position: center top, 0 0; }
-}
+.ranger-background .skills-section,
+.ranger-background .site-header nav.open { color: var(--ink); }
+.ranger-background .journey-section,
+.ranger-background .projects .section-heading > p,
+.ranger-background .channel-intro p:last-child,
+.ranger-background .youtube-section h2 em,
+.ranger-background .filters button,
+.ranger-background .menu-toggle { color: var(--paper); }
+.ranger-background .menu-toggle { border-color: currentColor; }
+.ranger-background .site-header nav.open a:hover { color: var(--green); }
