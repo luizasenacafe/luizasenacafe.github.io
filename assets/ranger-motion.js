@@ -1,5 +1,6 @@
 const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
 const background = document.body;
+const spotlight = background.classList.contains('welcome-page');
 let frame = 0;
 
 function resetBackground() {
@@ -13,8 +14,10 @@ window.addEventListener('pointermove', (event) => {
 
   cancelAnimationFrame(frame);
   frame = requestAnimationFrame(() => {
-    background.style.setProperty('--ranger-x', event.clientX + 'px');
-    background.style.setProperty('--ranger-y', event.clientY + 'px');
+    const x = spotlight ? event.clientX : (event.clientX / innerWidth - 0.5) * 48;
+    const y = spotlight ? event.clientY : (event.clientY / innerHeight - 0.5) * 36;
+    background.style.setProperty('--ranger-x', x + 'px');
+    background.style.setProperty('--ranger-y', y + 'px');
   });
 }, { passive: true });
 

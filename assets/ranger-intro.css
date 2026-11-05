@@ -1,4 +1,4 @@
-.ranger-background {
+.welcome-page {
   background-color: #172c22;
   background-image:
     radial-gradient(circle clamp(220px, 37vw, 550px) at var(--ranger-x, 68vw) var(--ranger-y, 35vh),
@@ -8,31 +8,31 @@
   background-attachment: fixed;
   color: var(--paper);
 }
-.ranger-background .site-header,
-.ranger-background .welcome-header,
-.ranger-background .hero-footnote { border-color: #b5c7a37a; }
-.ranger-background .welcome h1 em,
-.ranger-background .hero h1 em,
-.ranger-background .about h2 em,
-.ranger-background .projects h2 em,
-.ranger-background .philosophy h2 em { color: var(--lime); }
-.ranger-background .hero h1 .outline { -webkit-text-stroke-color: var(--lime); }
-.ranger-background .hero-copy,
-.ranger-background .welcome-copy,
-.ranger-background .site-header,
-.ranger-background .about,
-.ranger-background .projects > .section-heading,
-.ranger-background .philosophy { text-shadow: 0 1px 4px #0c1d14; }
-.ranger-background .button,
-.ranger-background .project-card { text-shadow: none; }
-.ranger-background .project-card,
-.ranger-background .skill-grid article,
-.ranger-background .skip { color: var(--ink); }
-.ranger-background .nav-contact { border-color: currentColor; }
-.ranger-background .site-header a:hover,
-.ranger-background .welcome .text-link:hover,
-.ranger-background .hero .text-link:hover,
-.ranger-background .philosophy .text-link:hover { color: var(--lime); }
+.welcome-page .site-header,
+.welcome-page .welcome-header,
+.welcome-page .hero-footnote { border-color: #b5c7a37a; }
+.welcome-page .welcome h1 em,
+.welcome-page .hero h1 em,
+.welcome-page .about h2 em,
+.welcome-page .projects h2 em,
+.welcome-page .philosophy h2 em { color: var(--lime); }
+.welcome-page .hero h1 .outline { -webkit-text-stroke-color: var(--lime); }
+.welcome-page .hero-copy,
+.welcome-page .welcome-copy,
+.welcome-page .site-header,
+.welcome-page .about,
+.welcome-page .projects > .section-heading,
+.welcome-page .philosophy { text-shadow: 0 1px 4px #0c1d14; }
+.welcome-page .button,
+.welcome-page .project-card { text-shadow: none; }
+.welcome-page .project-card,
+.welcome-page .skill-grid article,
+.welcome-page .skip { color: var(--ink); }
+.welcome-page .nav-contact { border-color: currentColor; }
+.welcome-page .site-header a:hover,
+.welcome-page .welcome .text-link:hover,
+.welcome-page .hero .text-link:hover,
+.welcome-page .philosophy .text-link:hover { color: var(--lime); }
 .wordmark .wordmark-dash {
   display: inline-block;
   width: .36em;
@@ -86,13 +86,25 @@
 @media (max-width: 740px) {
   .welcome { min-height: auto; grid-template-columns: 1fr; }
 }
-.ranger-background .skills-section,
-.ranger-background .site-header nav.open { color: var(--ink); }
-.ranger-background .journey-section,
-.ranger-background .projects .section-heading > p,
-.ranger-background .channel-intro p:last-child,
-.ranger-background .youtube-section h2 em,
-.ranger-background .filters button,
-.ranger-background .menu-toggle { color: var(--paper); }
-.ranger-background .menu-toggle { border-color: currentColor; }
-.ranger-background .site-header nav.open a:hover { color: var(--green); }
+.welcome-page .skills-section,
+.welcome-page .site-header nav.open { color: var(--ink); }
+.welcome-page .journey-section,
+.welcome-page .projects .section-heading > p,
+.welcome-page .channel-intro p:last-child,
+.welcome-page .youtube-section h2 em,
+.welcome-page .filters button,
+.welcome-page .menu-toggle { color: var(--paper); }
+.welcome-page .menu-toggle { border-color: currentColor; }
+.welcome-page .site-header nav.open a:hover { color: var(--green); }
+
+.ranger-background:not(.welcome-page) {
+  background-image: radial-gradient(ellipse at center, #d5ef8870, transparent 58%),
+    radial-gradient(circle, #36554228 1px, transparent 1.5px);
+  background-size: 120vw 100vh, 24px 24px;
+  background-position: calc(50% + var(--ranger-x, 0px)) calc(0px + var(--ranger-y, 0px)),
+    var(--ranger-x, 0px) var(--ranger-y, 0px);
+  background-attachment: fixed;
+}
+@media (prefers-reduced-motion: reduce) {
+  .ranger-background:not(.welcome-page) { background-position: center top, 0 0; }
+}
