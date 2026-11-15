@@ -12,97 +12,118 @@
   <title>Luiza Sena | IA, código e ciência</title>
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
   <link rel="preload" href="assets/fonts/instrument-serif-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="assets/cosmos.css?v=2">
-  <script defer src="assets/cosmos.js?v=2"></script>
+  <link rel="stylesheet" href="assets/cosmos.css?v=3">
+  <script defer src="assets/cosmos.js?v=3"></script>
 </head>
 <body data-page="portfolio">
 
 <canvas id="cosmos" aria-hidden="true"></canvas>
 <div class="grain" aria-hidden="true"></div>
+<div class="cursor-glow" aria-hidden="true"></div>
 <div class="cursor" aria-hidden="true"><i></i><b></b></div>
 <div class="progress" aria-hidden="true"></div>
-<div class="veil" aria-hidden="true"></div>
+<div class="wipe" aria-hidden="true"></div>
 
-<a class="skip" href="#conteudo">Pular para o conteúdo</a>
+<a class="skip" href="#sobre">Pular para o conteúdo</a>
 
 <header class="top">
   <a class="wordmark" href="./" aria-label="Luiza Sena, voltar à página inicial"><em>luiza</em> sena</a>
-  <button class="menu-toggle" aria-expanded="false" aria-controls="menu">Menu</button>
-  <nav id="menu" aria-label="Navegação principal">
-    <a href="#sobre">Sobre</a>
-    <a href="#habilidades">Habilidades</a>
-    <a href="#projetos">Projetos</a>
-    <a href="#trajetoria">Trajetória</a>
-    <a href="#youtube">YouTube</a>
-    <a class="nav-cta" href="#contato">Vamos conversar</a>
+  <nav aria-label="Navegação principal">
+    <a href="#sistema">Sistema solar</a>
+    <a class="nav-cta" href="#contato">Contato</a>
   </nav>
 </header>
 
-<!-- Leitura do "instrumento": capítulo atual e posição do cursor. Decorativo. -->
+<!-- Leitura do "instrumento": capítulo atual, figura do fundo e posição do cursor. Decorativo. -->
 <div class="hud" aria-hidden="true">
-  <span class="hud-chapter"><b id="hud-n">1</b> de 7 <span id="hud-name">Estrela</span><span id="hud-fig"></span></span>
+  <span class="hud-chapter"><b id="hud-n">1</b> de <span id="hud-total">10</span> <span id="hud-name">Sistema solar</span><span id="hud-fig"></span></span>
   <span class="hud-data" id="hud-data">x +0.00  y +0.00</span>
 </div>
-<nav class="rail" aria-label="Capítulos da página"></nav>
+<nav class="rail" aria-label="Seções da página"></nav>
 
 <main id="conteudo">
 
-<section class="chapter hero" id="inicio" data-name="Estrela" data-fig="supergigante vermelha, como Betelgeuse">
-  <div class="wrap">
-    <p class="kicker"><span class="dot"></span>Luiza Sena, IA, código e ciência</p>
-    <h1 class="display">
-      <span class="line"><span>Transformo</span></span>
-      <span class="line"><span>curiosidade</span></span>
-      <span class="line it"><span>em código.</span></span>
-    </h1>
-    <p class="hero-text">Oi, eu sou a <strong>Luiza.</strong> Transformo curiosidade em código e inteligência artificial em possibilidades. Sempre pronta para a próxima missão.</p>
-    <div class="actions">
-      <a class="button" href="#projetos">Explorar missões</a>
-      <a class="link" href="assets/curriculo-luiza-sena.pdf" download>Baixar currículo completo</a>
+<!-- ================= Sistema solar: a seleção de seções ================= -->
+<section class="chapter hub" id="sistema" data-name="Sistema solar" data-fig="o Sol e oito planetas, cada um leva a uma seção">
+  <div class="hub-pin">
+    <div class="fms" aria-hidden="true">
+      <p class="fm" data-h data-s="0.5" style="left:6%;top:24%">T² ∝ a³</p>
+      <p class="fm" data-h data-s="-0.4" style="right:7%;top:20%">F = G m₁m₂ / r²</p>
+      <p class="fm fm-d" data-h data-s="0.7" style="left:9%;bottom:16%">v = √(GM / r)</p>
+      <p class="fm fm-d" data-h data-s="-0.6" style="right:9%;bottom:20%">E = −GMm / 2a</p>
     </div>
-    <p class="hero-foot"><span>Computação + IA + Física</span><span>Curiosidade: ∞</span></p>
+    <div class="hub-head">
+      <p class="kicker"><span class="dot"></span>Luiza Sena, IA, código e ciência</p>
+      <h1>Escolha um planeta</h1>
+      <p>Cada planeta leva a uma seção. Ou role a página para visitar todos em ordem.</p>
+    </div>
+    <div class="system">
+      <svg class="orbits" aria-hidden="true"></svg>
+      <span class="sun-rays" aria-hidden="true"></span>
+      <a class="planet" href="#sobre" data-planet="mercury"><span class="orb"><i class="ball"></i></span><span class="planet-name">Sobre</span></a>
+      <a class="planet" href="#habilidades" data-planet="venus"><span class="orb"><i class="ball"></i></span><span class="planet-name">Habilidades</span></a>
+      <a class="planet" href="#projetos" data-planet="earth"><span class="orb"><i class="ball"></i></span><span class="planet-name">Projetos</span></a>
+      <a class="planet" href="#experiencia" data-planet="mars"><span class="orb"><i class="ball"></i></span><span class="planet-name">Experiência</span></a>
+      <a class="planet" href="#cursos" data-planet="jupiter"><span class="orb"><i class="ball"></i></span><span class="planet-name">Cursos</span></a>
+      <a class="planet" href="#certificados" data-planet="saturn"><span class="orb"><i class="ring"></i><i class="ball"></i><i class="ring front"></i></span><span class="planet-name">Certificados</span></a>
+      <a class="planet" href="#youtube" data-planet="uranus"><span class="orb"><i class="ball"></i></span><span class="planet-name">YouTube</span></a>
+      <a class="planet" href="#contato" data-planet="neptune"><span class="orb"><i class="ball"></i></span><span class="planet-name">Contato</span></a>
+    </div>
   </div>
-  <p class="hint" aria-hidden="true">Mova o cursor. Clique no vazio. Role para viajar.</p>
 </section>
 
-<section class="chapter about" id="sobre" data-name="Galáxia" data-fig="espiral barrada, com halo de estrelas">
-  <div class="wrap about-grid">
-    <div class="about-main">
-      <h2 class="display rv"><span class="line"><span>Mente curiosa.</span></span><span class="line it"><span>Espírito livre.</span></span></h2>
+<div class="ticker" aria-hidden="true"><div class="ticker-track" data-dir="1">
+  <span>e<sup>iπ</sup> + 1 = 0</span><span>∇ × B = μ₀J + μ₀ε₀ ∂E/∂t</span><span>E = mc²</span><span>iħ ∂ψ/∂t = Ĥψ</span><span>ΔS ≥ 0</span><span>F = ma</span>
+  <span>e<sup>iπ</sup> + 1 = 0</span><span>∇ × B = μ₀J + μ₀ε₀ ∂E/∂t</span><span>E = mc²</span><span>iħ ∂ψ/∂t = Ĥψ</span><span>ΔS ≥ 0</span><span>F = ma</span>
+</div></div>
+
+<!-- ================= Mercúrio: Sobre ================= -->
+<section class="chapter about side-r" id="sobre" data-name="Sobre" data-fig="galáxia espiral barrada">
+  <div class="fms" aria-hidden="true">
+    <p class="fm" data-s="0.35" style="left:5%;top:12%">e<sup>iπ</sup> + 1 = 0</p>
+    <p class="fm fm-d" data-s="-0.25" style="left:8%;top:62%">ds² = −c²dt² + dx² + dy² + dz²</p>
+    <p class="fm fm-d" data-s="0.5" style="left:22%;top:88%">∇ · E = ρ / ε₀</p>
+  </div>
+  <div class="wrap">
+    <div class="col">
+      <header class="head"><span class="emblem" data-planet="mercury"></span><div><p class="head-sub">Mercúrio</p><h2 class="title">Sobre</h2></div></header>
       <p class="statement" data-words>Gosto de fazer perguntas, entender como as coisas funcionam e transformar esse aprendizado em algo real.</p>
-      <div class="prose rv">
+      <div class="prose fx">
         <p>Sou engenheira de prompts e treinadora de IA, com experiência prática em avaliação e alinhamento de respostas de grandes modelos de linguagem, anotação de dados e documentação de fluxos técnicos.</p>
         <p>Curso Ciência da Computação, Inteligência Artificial e Aprendizado de Máquina e Física. Essa combinação alimenta meu interesse por IA para descoberta científica, física computacional e tecnologias que respeitam a privacidade.</p>
         <p>Fora dos modelos e algoritmos, também tem espaço para animes, café e criação de conteúdo: compartilhar perguntas e descobertas faz parte da minha forma de aprender.</p>
       </div>
-      <div class="person rv">
+      <div class="person fx" style="--side:1">
         <img src="assets/luiza.jpeg" width="64" height="64" alt="Foto de Luiza Sena" loading="lazy">
         <p><strong>Luiza Sena</strong><span>Viçosa, Minas Gerais, Brasil</span></p>
       </div>
-      <ul class="chips rv" aria-label="O que guia meu trabalho"><li>IA centrada nas pessoas</li><li>Privacidade</li><li>Aprendizado contínuo</li></ul>
+      <ul class="chips fx" aria-label="O que guia meu trabalho"><li>IA centrada nas pessoas</li><li>Privacidade</li><li>Aprendizado contínuo</li></ul>
     </div>
   </div>
 </section>
 
-<section class="chapter skills" id="habilidades" data-name="Gravidade" data-fig="o espaço-tempo curvado por uma massa">
+<!-- ================= Vênus: Habilidades ================= -->
+<section class="chapter skills" id="habilidades" data-name="Habilidades" data-fig="o espaço-tempo curvado por uma massa">
+  <div class="fms" aria-hidden="true">
+    <p class="fm" data-s="0.3" style="right:6%;top:9%">G<sub>μν</sub> + Λg<sub>μν</sub> = (8πG / c⁴) T<sub>μν</sub></p>
+    <p class="fm fm-d" data-s="-0.3" style="left:4%;top:86%">softmax(QKᵀ / √d<sub>k</sub>) V</p>
+    <p class="fm fm-d" data-s="0.45" style="right:10%;top:90%">θ ← θ − η ∇L(θ)</p>
+  </div>
   <div class="wrap">
-    <h2 class="display rv"><span class="line"><span>Técnica</span></span><span class="line it"><span>mais instinto.</span></span></h2>
+    <header class="head"><span class="emblem" data-planet="venus"></span><div><p class="head-sub">Vênus</p><h2 class="title">Habilidades</h2></div></header>
     <div class="skill-grid">
-      <article class="glass tilt rv">
-        <p class="label">IA e dados</p>
-        <h3>Dar direção à inteligência.</h3>
+      <article class="glass tilt fx" style="--side:-1">
+        <h3>IA e dados</h3>
         <p>Design e teste de prompts, avaliação de LLMs, revisão de respostas, anotação de dados e análise de possíveis vieses.</p>
         <ul class="chips"><li>Prompts</li><li>LLMs</li><li>Qualidade de dados</li></ul>
       </article>
-      <article class="glass tilt rv">
-        <p class="label">Desenvolvimento</p>
-        <h3>Transformar ideia em interface.</h3>
+      <article class="glass tilt fx">
+        <h3>Desenvolvimento</h3>
         <p>Aplicações web responsivas, programação, documentação e organização de projetos com controle de versão.</p>
         <ul class="chips"><li>Python</li><li>JavaScript</li><li>HTML e CSS</li><li>Git</li><li>Linux</li></ul>
       </article>
-      <article class="glass tilt rv">
-        <p class="label">IA local e ciência</p>
-        <h3>Explorar com responsabilidade.</h3>
+      <article class="glass tilt fx" style="--side:1">
+        <h3>IA local e ciência</h3>
         <p>Aplicações locais com LM Studio e foco em privacidade. Estudos em machine learning, física e fundamentos de cibersegurança.</p>
         <ul class="chips"><li>LM Studio</li><li>Privacidade</li><li>Pensamento científico</li></ul>
       </article>
@@ -110,18 +131,24 @@
   </div>
 </section>
 
-<section class="chapter projects" id="projetos" data-name="Átomo" data-fig="átomo: núcleo e órbitas de elétrons">
+<!-- ================= Terra: Projetos (a rolagem vira movimento lateral) ================= -->
+<section class="chapter projects" id="projetos" data-name="Projetos" data-fig="átomo: núcleo e órbitas de elétrons">
   <div class="hscroll">
     <div class="hscroll-pin">
+      <div class="fms" aria-hidden="true">
+        <p class="fm" data-h data-s="0.12" style="left:46%;top:12%">iħ ∂ψ/∂t = Ĥψ</p>
+        <p class="fm fm-d" data-h data-s="0.2" style="left:78%;top:84%">E<sub>n</sub> = −13,6 eV / n²</p>
+        <p class="fm fm-d" data-h data-s="0.3" style="left:120%;top:10%">Δx Δp ≥ ħ / 2</p>
+      </div>
       <div class="hscroll-track">
         <div class="panel panel-intro">
-          <h2 class="display"><span class="line"><span>Cada projeto,</span></span><span class="line it"><span>uma nova missão.</span></span></h2>
-          <p>Experimentos, descobertas e soluções. Uma seleção do que venho construindo.</p>
-          <p class="panel-hint" aria-hidden="true">Deslize para o lado para ver as missões.</p>
+          <header class="head"><span class="emblem" data-planet="earth"></span><div><p class="head-sub">Terra</p><h2 class="title">Projetos</h2></div></header>
+          <p>Uma seleção do que venho construindo.</p>
+          <p class="panel-hint" aria-hidden="true">Deslize para o lado para ver os projetos.</p>
         </div>
 
         <article class="panel glass project">
-          <div class="project-art art-star" aria-hidden="true"><i></i><p>Inteligência perto de você.<br><strong>Seus dados também.</strong></p></div>
+          <div class="project-art art-star" aria-hidden="true"><i></i><p>Local, privado, pessoal</p></div>
           <div class="project-body">
             <p class="label">Inteligência artificial</p>
             <h3>Betelgeuse A.I.</h3>
@@ -136,7 +163,7 @@
           <div class="project-body">
             <p class="label">Desenvolvimento web</p>
             <h3>Random Animes</h3>
-            <p>Uma aplicação para descobrir animes e mangás, com filtros por gênero e modos de navegação separados. Para a eterna dúvida: o que assistir agora?</p>
+            <p>Uma aplicação para descobrir animes e mangás, com filtros por gênero e modos de navegação separados.</p>
             <ul class="chips"><li>HTML</li><li>CSS</li><li>JavaScript</li></ul>
             <a class="link" href="https://luizasenacafe.github.io/random_animes/" target="_blank" rel="noopener noreferrer">Visitar o projeto</a>
           </div>
@@ -146,7 +173,7 @@
           <div class="project-art art-orbit" aria-hidden="true"><i></i><i></i><i></i></div>
           <div class="project-body">
             <p class="label">Desenvolvimento web</p>
-            <h3>Este cantinho na internet</h3>
+            <h3>Este portfólio</h3>
             <p>Meu portfólio pessoal: projetos, trajetória e interesses em um espaço que também tem a minha personalidade.</p>
             <a class="link" href="https://github.com/luizasenacafe/luizasenacafe.github.io" target="_blank" rel="noopener noreferrer">Ver como foi feito</a>
           </div>
@@ -156,93 +183,124 @@
   </div>
 </section>
 
-<section class="chapter journey" id="trajetoria" data-name="Hélice" data-fig="dupla hélice do DNA">
+<!-- ================= Marte: Experiência ================= -->
+<section class="chapter experience side-l" id="experiencia" data-name="Experiência" data-fig="dupla hélice do DNA">
+  <div class="fms" aria-hidden="true">
+    <p class="fm" data-s="0.3" style="right:5%;top:10%">P(A|B) = P(B|A) P(A) / P(B)</p>
+    <p class="fm fm-d" data-s="-0.3" style="right:9%;top:84%">H = −Σ p<sub>i</sub> log p<sub>i</sub></p>
+  </div>
   <div class="wrap">
-    <h2 class="display rv"><span class="line"><span>A próxima fase</span></span><span class="line it"><span>começa agora.</span></span></h2>
-    <p class="section-note rv">Aprender, colocar em prática, refinar. E começar a próxima fase.</p>
-
-    <div class="journey-grid">
-      <div>
-        <h3 class="sub rv">Onde venho contribuindo</h3>
-        <ol class="timeline">
-          <li>
-            <p class="when">Abril de 2026 até hoje, remoto</p>
-            <h4>Engenheira de Prompts</h4>
-            <p class="where">Outlier AI</p>
-            <p>Criação, teste e avaliação de prompts para grandes modelos de linguagem. Revisão de respostas, identificação de falhas e documentação de critérios de avaliação.</p>
-          </li>
-          <li>
-            <p class="when">2025 a 2026, remoto</p>
-            <h4>Analista de Dados e Treinadora de IA</h4>
-            <p class="where">RWS Group</p>
-            <p>Análise e anotação de dados, avaliação de qualidade e possíveis vieses em respostas de IA, além de feedback e documentação para treinamento de modelos.</p>
-          </li>
-          <li>
-            <p class="when">2024 a 2025, freelancer</p>
-            <h4>Desenvolvedora Web</h4>
-            <p class="where">Projeto para uma profissional de Psicologia</p>
-            <p>Planejamento, desenvolvimento e publicação de um site profissional responsivo, do conceito ao lançamento. Gestão e otimização do Perfil da Empresa no Google.</p>
-          </li>
-        </ol>
-      </div>
-      <div>
-        <h3 class="sub rv">O que sigo aprendendo</h3>
-        <article class="glass study rv">
-          <p class="when">Bacharelado, em andamento</p>
-          <h4>Ciência da Computação</h4>
-          <p>UNINTER, 2º ano</p>
-          <p class="small">Conclusão prevista: 2030</p>
-        </article>
-        <article class="glass study rv">
-          <p class="when">Tecnólogo, em andamento</p>
-          <h4>Inteligência Artificial e Aprendizado de Máquina</h4>
-          <p>UNIASSELVI</p>
-          <p class="small">Conclusão prevista: 1º semestre de 2029</p>
-        </article>
-        <article class="glass study rv">
-          <p class="when">Licenciatura, em andamento</p>
-          <h4>Física</h4>
-          <p>Unicesumar</p>
-          <p class="small">Conclusão prevista: 2º semestre de 2030</p>
-        </article>
-        <div class="languages rv">
-          <h4>Palavras também conectam.</h4>
-          <p>Português nativo, inglês intermediário, espanhol básico.</p>
-        </div>
-      </div>
-    </div>
-
-    <h3 class="sub rv">Mais algumas peças dessa jornada: certificações e cursos</h3>
-    <div class="cert-grid">
-      <article class="glass rv"><p class="when">107 horas, 2026</p><h4>AI Specialist</h4><p>Santander Digital Immersion: Alura, FIAP, PM3 e StartSe</p></article>
-      <article class="glass rv"><p class="when">Cisco Networking Academy</p><h4>Introdução à Cibersegurança</h4><p>Selo digital verificado</p></article>
-      <article class="glass rv"><p class="when">20 horas, 2026</p><h4>Python: Programação Orientada a Objetos para Iniciantes</h4><p>Extensão universitária, UNINTER</p></article>
-      <article class="glass rv"><p class="when">40 horas, 2026</p><h4>Letramento Digital: Introdução Profissional</h4><p>SENAI-MG</p></article>
+    <div class="col">
+      <header class="head"><span class="emblem" data-planet="mars"></span><div><p class="head-sub">Marte</p><h2 class="title">Experiência</h2></div></header>
+      <ol class="timeline">
+        <li class="fx" style="--side:-1">
+          <p class="when">Abril de 2026 até hoje, remoto</p>
+          <h3>Engenheira de Prompts</h3>
+          <p class="where">Outlier AI</p>
+          <p>Criação, teste e avaliação de prompts para grandes modelos de linguagem. Revisão de respostas, identificação de falhas e documentação de critérios de avaliação.</p>
+        </li>
+        <li class="fx" style="--side:-1">
+          <p class="when">2025 a 2026, remoto</p>
+          <h3>Analista de Dados e Treinadora de IA</h3>
+          <p class="where">RWS Group</p>
+          <p>Análise e anotação de dados, avaliação de qualidade e possíveis vieses em respostas de IA, além de feedback e documentação para treinamento de modelos.</p>
+        </li>
+        <li class="fx" style="--side:-1">
+          <p class="when">2024 a 2025, freelancer</p>
+          <h3>Desenvolvedora Web</h3>
+          <p class="where">Projeto para uma profissional de Psicologia</p>
+          <p>Planejamento, desenvolvimento e publicação de um site profissional responsivo, do conceito ao lançamento. Gestão e otimização do Perfil da Empresa no Google.</p>
+        </li>
+      </ol>
     </div>
   </div>
 </section>
 
-<section class="chapter channel" id="youtube" data-name="Sinal" data-fig="interferência entre duas ondas">
+<!-- ================= Júpiter: Cursos ================= -->
+<section class="chapter courses side-r" id="cursos" data-name="Cursos" data-fig="atrator de Lorenz, o desenho do caos">
+  <div class="fms" aria-hidden="true">
+    <p class="fm" data-s="0.25" style="left:4%;top:8%">dx/dt = σ(y − x)</p>
+    <p class="fm" data-s="0.4" style="left:7%;top:20%">dy/dt = x(ρ − z) − y</p>
+    <p class="fm fm-d" data-s="0.55" style="left:5%;top:32%">dz/dt = xy − βz</p>
+    <p class="fm fm-d" data-s="-0.3" style="left:6%;top:74%">∫<sub>a</sub><sup>b</sup> f(x) dx = F(b) − F(a)</p>
+    <p class="fm fm-d" data-s="0.35" style="left:10%;top:92%">lim<sub>h→0</sub> [f(x + h) − f(x)] / h</p>
+  </div>
   <div class="wrap">
-    <h2 class="display rv"><span class="line"><span>Ciência, games</span></span><span class="line it"><span>e um pouco de caos.</span></span></h2>
-    <div class="channel-intro rv">
+    <div class="col">
+      <header class="head"><span class="emblem" data-planet="jupiter"></span><div><p class="head-sub">Júpiter</p><h2 class="title">Cursos</h2></div></header>
+      <article class="glass study tilt fx" style="--side:1">
+        <p class="when">Bacharelado, em andamento</p>
+        <h3>Ciência da Computação</h3>
+        <p>UNINTER, 2º ano</p>
+        <p class="small">Conclusão prevista: 2030</p>
+      </article>
+      <article class="glass study tilt fx" style="--side:-1">
+        <p class="when">Tecnólogo, em andamento</p>
+        <h3>Inteligência Artificial e Aprendizado de Máquina</h3>
+        <p>UNIASSELVI</p>
+        <p class="small">Conclusão prevista: 1º semestre de 2029</p>
+      </article>
+      <article class="glass study tilt fx" style="--side:1">
+        <p class="when">Licenciatura, em andamento</p>
+        <h3>Física</h3>
+        <p>Unicesumar</p>
+        <p class="small">Conclusão prevista: 2º semestre de 2030</p>
+      </article>
+      <div class="languages fx">
+        <h3>Idiomas</h3>
+        <p>Português nativo, inglês intermediário, espanhol básico.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= Saturno: Certificados ================= -->
+<section class="chapter certs side-l" id="certificados" data-name="Certificados" data-fig="tesserato, o cubo de quatro dimensões">
+  <div class="fms" aria-hidden="true">
+    <p class="fm" data-s="0.3" style="right:6%;top:10%">V − E + F = 2</p>
+    <p class="fm fm-d" data-s="-0.35" style="right:8%;top:86%">2ⁿ vértices, n · 2ⁿ⁻¹ arestas</p>
+  </div>
+  <div class="wrap">
+    <div class="col">
+      <header class="head"><span class="emblem" data-planet="saturn"></span><div><p class="head-sub">Saturno</p><h2 class="title">Certificados</h2></div></header>
+      <div class="cert-grid">
+        <article class="glass tilt holo fx deal" style="--i:0;--c:0;--r:0"><p class="when">107 horas, 2026</p><h3>AI Specialist</h3><p>Santander Digital Immersion: Alura, FIAP, PM3 e StartSe</p></article>
+        <article class="glass tilt holo fx deal" style="--i:1;--c:1;--r:0"><p class="when">Cisco Networking Academy</p><h3>Introdução à Cibersegurança</h3><p>Selo digital verificado</p></article>
+        <article class="glass tilt holo fx deal" style="--i:2;--c:0;--r:1"><p class="when">20 horas, 2026</p><h3>Python: Programação Orientada a Objetos para Iniciantes</h3><p>Extensão universitária, UNINTER</p></article>
+        <article class="glass tilt holo fx deal" style="--i:3;--c:1;--r:1"><p class="when">40 horas, 2026</p><h3>Letramento Digital: Introdução Profissional</h3><p>SENAI-MG</p></article>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= Urano: YouTube ================= -->
+<section class="chapter channel" id="youtube" data-name="YouTube" data-fig="interferência entre duas ondas">
+  <div class="fms" aria-hidden="true">
+    <p class="fm" data-s="0.3" style="right:5%;top:8%">∂²u/∂t² = c² ∇²u</p>
+    <p class="fm fm-d" data-s="-0.3" style="left:4%;top:90%">y = A sin(kx − ωt)</p>
+    <p class="fm fm-d" data-s="0.4" style="right:8%;top:92%">f̂(ξ) = ∫ f(x) e<sup>−2πixξ</sup> dx</p>
+  </div>
+  <div class="wrap">
+    <header class="head"><span class="emblem" data-planet="uranus"></span><div><p class="head-sub">Urano</p><h2 class="title">YouTube</h2></div></header>
+    <div class="channel-intro fx">
       <div>
         <h3>Luizométrico</h3>
-        <p class="when">YouTube, @shinnnji22</p>
+        <p class="when">@shinnnji22</p>
       </div>
-      <p>No meu canal, matemática e física encontram os games e o humor. Tem relatividade enquanto jogo Minecraft, limites explicados de um jeito descontraído e até uma lista da UNICAMP no meio de uma batalha contra o Sans, de Undertale. Um espaço para explorar ideias e aprender junto, sem perder a diversão.</p>
+      <p>No meu canal, matemática e física encontram os games e o humor. Tem relatividade enquanto jogo Minecraft, limites explicados de um jeito descontraído e até uma lista da UNICAMP no meio de uma batalha contra o Sans, de Undertale.</p>
       <a class="button" href="https://www.youtube.com/@shinnnji22" target="_blank" rel="noopener noreferrer">Conhecer o canal</a>
     </div>
+    <svg class="wave" viewBox="0 0 1000 120" preserveAspectRatio="none" aria-hidden="true"><path id="wave-a"/><path id="wave-b"/></svg>
     <div class="video-grid">
-      <a class="video tilt rv" href="https://www.youtube.com/watch?v=ZzKhgfQUWh8" target="_blank" rel="noopener noreferrer">
+      <a class="video tilt fx" style="--side:-1" href="https://www.youtube.com/watch?v=ZzKhgfQUWh8" target="_blank" rel="noopener noreferrer">
         <span class="thumb"><img src="https://i.ytimg.com/vi/ZzKhgfQUWh8/hqdefault.jpg" width="480" height="360" alt="" loading="lazy"></span>
         <span class="video-title">lutando contra o Sans (Undertale) MAS eu tô fazendo uma lista da UNICAMP</span>
       </a>
-      <a class="video tilt rv" href="https://www.youtube.com/watch?v=6Ul7VxnznYo" target="_blank" rel="noopener noreferrer">
+      <a class="video tilt fx" href="https://www.youtube.com/watch?v=6Ul7VxnznYo" target="_blank" rel="noopener noreferrer">
         <span class="thumb"><img src="https://i.ytimg.com/vi/6Ul7VxnznYo/hqdefault.jpg" width="480" height="360" alt="" loading="lazy"></span>
         <span class="video-title">a teoria da relatividade mas eu to jogando Minecraft</span>
       </a>
-      <a class="video tilt rv" href="https://www.youtube.com/watch?v=N7-oThNTtPM" target="_blank" rel="noopener noreferrer">
+      <a class="video tilt fx" style="--side:1" href="https://www.youtube.com/watch?v=N7-oThNTtPM" target="_blank" rel="noopener noreferrer">
         <span class="thumb"><img src="https://i.ytimg.com/vi/N7-oThNTtPM/hqdefault.jpg" width="480" height="360" alt="" loading="lazy"></span>
         <span class="video-title">resolvendo um desafio matematico de madrugada pq to sem nada pra fazer</span>
       </a>
@@ -250,30 +308,73 @@
   </div>
 </section>
 
-<section class="chapter contact" id="contato" data-name="Horizonte" data-fig="buraco negro com disco de acreção e jatos">
-  <div class="wrap">
-    <blockquote class="creed rv">
-      <p class="display"><span class="line"><span>Proteger o que importa.</span></span><span class="line it"><span>Criar o que vem depois.</span></span></p>
-      <footer>Por trás da estética, o de sempre: curiosidade científica, cuidado com os dados e liberdade para experimentar. <a class="link" href="https://github.com/luizasenacafe" target="_blank" rel="noopener noreferrer">Acompanhe minhas próximas missões no GitHub</a></footer>
-    </blockquote>
+<div class="ticker" aria-hidden="true"><div class="ticker-track" data-dir="-1">
+  <span>v = v₀ + at</span><span>Δs = v₀t + ½at²</span><span>F = ma</span><span>E = ½mv²</span><span>γ = 1 / √(1 − v²/c²)</span><span>E = γmc²</span>
+  <span>v = v₀ + at</span><span>Δs = v₀t + ½at²</span><span>F = ma</span><span>E = ½mv²</span><span>γ = 1 / √(1 − v²/c²)</span><span>E = γmc²</span>
+</div></div>
 
-    <div class="contact-block">
-      <h2 class="display rv"><span class="line"><span>Vamos criar</span></span><span class="line it"><span>algo incrível?</span></span></h2>
-      <p class="rv">Sobre inteligência artificial, desenvolvimento, ciência ou uma boa recomendação de anime. Coisas boas também se constroem em equipe.</p>
-      <a class="email rv" href="mailto:luiizan12@gmail.com">luiizan12@gmail.com</a>
-      <div class="contact-links rv">
+<!-- ================= Estrada: o carro acelera com a rolagem até o destino ================= -->
+<section class="chapter road" id="estrada" data-name="Estrada" data-fig="a caminho do contato, acelerando até perto da velocidade da luz">
+  <div class="road-pin">
+    <canvas id="road-canvas" aria-hidden="true"></canvas>
+    <h2 class="sr-only">Estrada até o contato</h2>
+    <p class="sr-only">Cena decorativa: um carro acelera numa estrada conforme a página é rolada, até chegar à seção de contato.</p>
+    <div class="road-hud" aria-hidden="true">
+      <p class="road-speed"><b id="rd-v">60</b> <span id="rd-u">km/h</span></p>
+      <p class="road-eq">γ = 1 / √(1 − v²/c²) = <b id="rd-g">1,0000</b></p>
+      <p class="road-eq" id="rd-d">Destino: Contato</p>
+      <div class="road-bar"><i id="rd-bar"></i></div>
+    </div>
+    <p class="road-tip" aria-hidden="true">Role para acelerar. O mouse dirige.</p>
+    <svg class="car" viewBox="0 0 400 200" aria-hidden="true">
+      <defs>
+        <filter id="car-glow" x="-30%" y="-80%" width="160%" height="260%"><feGaussianBlur stdDeviation="7"/></filter>
+        <linearGradient id="car-glass" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1b2148"/><stop offset="1" stop-color="#05060c"/></linearGradient>
+      </defs>
+      <ellipse cx="200" cy="180" rx="168" ry="13" fill="currentColor" opacity=".55" filter="url(#car-glow)"/>
+      <rect x="54" y="128" width="50" height="50" rx="9" fill="#030306"/><rect x="296" y="128" width="50" height="50" rx="9" fill="#030306"/>
+      <path d="M92 36 H308 V44 H92Z M118 44 v14 M282 44 v14" fill="#0c0d18" stroke="currentColor" stroke-width="2"/>
+      <path d="M98 92 L126 50 Q131 42 143 42 H257 Q269 42 274 50 L302 92Z" fill="#090a14" stroke="rgba(255,255,255,.28)" stroke-width="1.5"/>
+      <path d="M120 86 L140 56 H260 L280 86Z" fill="url(#car-glass)"/>
+      <path d="M150 56 L138 86 M250 56 L262 86" stroke="rgba(255,255,255,.12)" stroke-width="6"/>
+      <path d="M40 150 L52 106 Q56 92 74 90 H326 Q344 92 348 106 L360 150 Q360 164 346 164 H54 Q40 164 40 150Z" fill="#0c0d18" stroke="currentColor" stroke-width="2"/>
+      <rect class="car-tail" x="62" y="104" width="276" height="12" rx="6" fill="currentColor" filter="url(#car-glow)"/>
+      <rect x="62" y="104" width="276" height="12" rx="6" fill="currentColor"/>
+      <rect x="66" y="107" width="268" height="3" rx="1.5" fill="#fff" opacity=".8"/>
+      <rect x="166" y="126" width="68" height="22" rx="3" fill="#ebe8df"/>
+      <text x="200" y="142" text-anchor="middle" font-family="Georgia, serif" font-size="14" font-style="italic" fill="#101018">E = mc²</text>
+      <g class="car-flames" fill="currentColor"><ellipse cx="120" cy="166" rx="9" ry="6"/><ellipse cx="280" cy="166" rx="9" ry="6"/></g>
+      <circle cx="120" cy="160" r="7" fill="#030306" stroke="#555a70"/><circle cx="280" cy="160" r="7" fill="#030306" stroke="#555a70"/>
+    </svg>
+    <p class="road-arrived" aria-hidden="true">Destino alcançado</p>
+    <div class="road-flash" aria-hidden="true"></div>
+  </div>
+</section>
+
+<!-- ================= Netuno: Contato ================= -->
+<section class="chapter contact side-l" id="contato" data-name="Contato" data-fig="buraco negro com disco de acreção e jatos">
+  <div class="fms" aria-hidden="true">
+    <p class="fm" data-s="0.3" style="right:6%;top:8%">r<sub>s</sub> = 2GM / c²</p>
+    <p class="fm fm-d" data-s="-0.3" style="right:10%;top:78%">S = k c³A / 4Għ</p>
+  </div>
+  <div class="wrap">
+    <div class="col">
+      <header class="head"><span class="emblem" data-planet="neptune"></span><div><p class="head-sub">Netuno</p><h2 class="title">Contato</h2></div></header>
+      <p class="fx">Sobre inteligência artificial, desenvolvimento, ciência ou uma boa recomendação de anime.</p>
+      <a class="email fx" href="mailto:luiizan12@gmail.com">luiizan12@gmail.com</a>
+      <div class="contact-links fx">
         <a href="https://www.linkedin.com/in/luiza-sena-5645913a7/" target="_blank" rel="noopener noreferrer">LinkedIn</a>
         <a href="https://github.com/luizasenacafe" target="_blank" rel="noopener noreferrer">GitHub</a>
         <a href="https://www.youtube.com/@shinnnji22" target="_blank" rel="noopener noreferrer">YouTube</a>
+        <a href="assets/curriculo-luiza-sena.pdf" download>Currículo (PDF)</a>
         <button id="copy-email" type="button">Copiar e-mail</button>
       </div>
       <p id="copy-status" role="status"></p>
     </div>
   </div>
   <footer class="site-foot wrap">
-    <p>Feito com curiosidade, café e noites em claro.</p>
     <p>© 2026 Luiza Sena</p>
-    <a class="link" href="#inicio">Voltar ao topo</a>
+    <a class="link" href="#sistema">Voltar ao sistema solar</a>
   </footer>
 </section>
 

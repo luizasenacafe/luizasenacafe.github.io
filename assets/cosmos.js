@@ -1,12 +1,16 @@
 // Portfólio de Luiza Sena: céu, figuras de partículas e efeitos de rolagem.
 //
-// Um único canvas WebGL (sem bibliotecas) desenha três camadas, de trás para a frente:
+// Um canvas WebGL fixo (sem bibliotecas) desenha três camadas, de trás para a frente:
 //   1. nebulosa: nuvens de gás e a faixa da Via Láctea, geradas uma vez numa textura;
 //   2. estrelas de fundo: milhares de pontos em profundidades diferentes;
-//   3. a figura: uma nuvem de partículas que assume uma forma da ciência por capítulo.
-// Ao rolar, a figura migra de uma forma para a seguinte e o céu desliza em paralaxe.
-// O cursor gira a figura, afasta as partículas e desloca o céu; um clique dispara uma onda.
-// O mesmo arquivo serve a página inicial (uma figura só) e o portfólio (sete capítulos).
+//   3. a figura: uma nuvem de partículas que assume uma forma da ciência por seção.
+// Por cima, o HTML: o sistema solar que serve de menu, as seções e a estrada.
+//
+// Quase tudo acompanha um mesmo número, o "índice de seção" (0 na primeira, 1 na
+// segunda...), calculado a partir da rolagem suavizada. Ele escolhe as duas figuras
+// entre as quais as partículas estão, a cor de destaque e a leitura do rodapé.
+//
+// O mesmo arquivo serve a página inicial (uma figura só) e o portfólio.
 (() => {
   'use strict';
 
@@ -21,28 +25,31 @@
   const ease = (t) => t * t * (3 - 2 * t);
   const $ = (s, el = document) => el.querySelector(s);
   const $$ = (s, el = document) => [...el.querySelectorAll(s)];
+  const TAU = Math.PI * 2;
 
-  // Uma figura por <section class="chapter">, na mesma ordem do HTML.
-  // color: cor de destaque. No portfólio segue a sequência de temperatura das
-  //        estrelas, de uma supergigante vermelha até o azul das mais quentes.
-  // tilt:  inclinação (0 = de perfil, 1.57 = de cima). rip: ondulação animada.
-  // off:   deslocamento lateral em telas largas (fração da largura).
-  const FIGURES = {
-    planet: { color: [255, 198, 140], tilt: 0.36, rip: 0,    scale: 1.0,  off: 0.4 },
-    star:   { color: [255, 107, 61],  tilt: 0.15, rip: 0,    scale: 1.0,  off: 0.42 },
-    galaxy: { color: [255, 168, 96],  tilt: 0.95, rip: 0,    scale: 1.0,  off: -0.44 },
-    well:   { color: [255, 226, 160], tilt: 0.6,  rip: 0.12, scale: 0.98, off: 0 },
-    atom:   { color: [244, 240, 255], tilt: 0.3,  rip: 0,    scale: 0.95, off: 0.3 },
-    helix:  { color: [178, 204, 255], tilt: 0.1,  rip: 0,    scale: 1.0,  off: 0.56 },
-    wave:   { color: [132, 164, 255], tilt: 0.5,  rip: 1,    scale: 1.2,  off: 0 },
-    hole:   { color: [150, 140, 255], tilt: 0.3,  rip: 0,    scale: 1.0,  off: 0.4 },
-  };
-  const ORDER = page === 'welcome' ? ['planet'] : ['star', 'galaxy', 'well', 'atom', 'helix', 'wave', 'hole'];
-  const CHAPTERS = ORDER.map((shape) => ({ shape, ...FIGURES[shape] }));
+  // Uma entrada por <section class="chapter">, na mesma ordem do HTML.
+  // shape:  figura de partículas.  color: cor de destaque (a do planeta da seção).
+  // color2: segunda cor da nebulosa.  tilt: inclinação (0 de perfil, 1.57 de cima).
+  // rip: ondulação animada.  off / y: posição na tela (frações; off só em telas largas).
+  const CHAPTERS = page === 'welcome'
+    ? [{ shape: 'planet', color: [255, 198, 140], color2: [46, 76, 242], tilt: 0.36, rip: 0, scale: 1.0, off: 0.4 }]
+    : [
+      { shape: 'star',      color: [255, 176, 72],  color2: [255, 70, 40],   tilt: 0.2,  rip: 0,    scale: 0.26, off: 0, y: 0, ySmall: -0.1 },   // Sol: seleção
+      { shape: 'galaxy',    color: [226, 200, 172], color2: [120, 80, 210],  tilt: 0.95, rip: 0,    scale: 1.0,  off: -0.44 },        // Mercúrio: Sobre
+      { shape: 'well',      color: [255, 206, 112], color2: [210, 70, 50],   tilt: 0.6,  rip: 0.12, scale: 0.98, off: 0 },            // Vênus: Habilidades
+      { shape: 'atom',      color: [96, 190, 255],  color2: [30, 200, 140],  tilt: 0.3,  rip: 0,    scale: 0.95, off: 0.3 },          // Terra: Projetos
+      { shape: 'helix',     color: [255, 112, 72],  color2: [170, 40, 100],  tilt: 0.1,  rip: 0,    scale: 1.0,  off: 0.52 },         // Marte: Experiência
+      { shape: 'lorenz',    color: [255, 170, 110], color2: [90, 60, 220],   tilt: 0.25, rip: 0,    scale: 1.05, off: -0.46 },        // Júpiter: Cursos
+      { shape: 'tesseract', color: [240, 214, 150], color2: [50, 130, 210],  tilt: 0.3,  rip: 0,    scale: 1.0,  off: 0.5 },          // Saturno: Certificados
+      { shape: 'wave',      color: [120, 235, 225], color2: [40, 80, 230],   tilt: 0.5,  rip: 1,    scale: 1.2,  off: 0 },            // Urano: YouTube
+      { shape: 'hole',      color: [255, 84, 196],  color2: [70, 40, 240],   tilt: 0.22, rip: 0,    scale: 0.3,  off: 0, y: 0.1, road: true },   // Estrada: o destino no horizonte
+      { shape: 'hole',      color: [124, 140, 255], color2: [180, 60, 230],  tilt: 0.3,  rip: 0,    scale: 1.0,  off: 0.42 },         // Netuno: Contato
+    ];
   const chapters = $$('.chapter');
   const LAST = CHAPTERS.length - 1;
+  const ROAD = CHAPTERS.findIndex((c) => c.road);
 
-  // ------------------------------------------------------------------ formas
+  // ================================================================== formas
   // Gerador determinístico: o mesmo céu e as mesmas figuras a cada visita.
   let seed = 20261115;
   const rnd = () => {
@@ -52,7 +59,6 @@
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
   };
   const gauss = () => (rnd() + rnd() + rnd() + rnd() - 2) / 2;
-  const TAU = Math.PI * 2;
   const onSphere = (r) => {
     const u = rnd() * 2 - 1, a = rnd() * TAU, s = Math.sqrt(1 - u * u);
     return [r * s * Math.cos(a), r * u, r * s * Math.sin(a)];
@@ -176,6 +182,38 @@
       return [Math.cos(a) * R + gauss() * 0.022, y + gauss() * 0.022, Math.sin(a) * R + gauss() * 0.022];
     },
 
+    // atrator de Lorenz: a trajetória de um sistema caótico (as equações aparecem na seção)
+    lorenz: () => {
+      const path = [];
+      let x = 0.1, y = 0, z = 0;
+      const dt = 0.006;
+      for (let i = 0; i < 9400; i++) {
+        const dx = 10 * (y - x), dy = x * (28 - z) - y, dz = x * y - (8 / 3) * z;
+        x += dx * dt; y += dy * dt; z += dz * dt;
+        if (i > 400) path.push([x / 19, (z - 25) / 19, y / 23]);
+      }
+      return () => jitter(path[Math.floor(rnd() * path.length)], 0.005);
+    },
+
+    // tesserato: as 32 arestas de um cubo de quatro dimensões, projetadas em três
+    tesseract: () => {
+      const V = Array.from({ length: 16 }, (_, i) => [i & 1 ? 1 : -1, i & 2 ? 1 : -1, i & 4 ? 1 : -1, i & 8 ? 1 : -1]);
+      const E = [];
+      for (let i = 0; i < 16; i++) for (let b = 0; b < 4; b++) { const j = i ^ (1 << b); if (j > i) E.push([i, j]); }
+      const ca = Math.cos(0.5), sa = Math.sin(0.5), cb = Math.cos(0.35), sb = Math.sin(0.35);
+      const project = ([x, y, z, w]) => {
+        [x, w] = [x * ca - w * sa, x * sa + w * ca];      // giro num plano que só existe em 4D
+        [y, z] = [y * cb - z * sb, y * sb + z * cb];
+        const k = 0.62 / (1.75 - w * 0.6);                // perspectiva na quarta dimensão
+        return [x * k, y * k, z * k];
+      };
+      return () => {
+        if (rnd() < 0.2) return add(project(V[Math.floor(rnd() * 16)]), onSphere(Math.cbrt(rnd()) * 0.04));
+        const [a, b] = E[Math.floor(rnd() * E.length)], t = rnd();
+        return jitter(project(V[a].map((v, i) => lerp(v, V[b][i], t))), 0.004);
+      };
+    },
+
     // duas fontes numa superfície plana: a interferência é desenhada pelo shader
     wave: () => () => {
       const k = rnd();
@@ -199,11 +237,11 @@
     },
   };
 
-  // ------------------------------------------------------------------ WebGL
+  // ================================================================== WebGL
   const canvas = $('#cosmos');
   const small = Math.min(innerWidth, innerHeight) < 700;
   const COUNT = small ? 10000 : 28000;       // partículas da figura
-  const STARS = small ? 1600 : 3200;         // estrelas de fundo
+  const STARS = small ? 1600 : 3400;         // estrelas de fundo
   let gl = null;
   const prog = {}, buffers = {};
   let nebulaTexture = null, nebulaFbo = null;
@@ -231,14 +269,14 @@
     }`;
   const NEBULA_SHOW = `
     precision mediump float;
-    varying vec2 vUv; uniform sampler2D uTex; uniform vec2 uShift; uniform vec3 uCol; uniform float uFade;
+    varying vec2 vUv; uniform sampler2D uTex; uniform vec2 uShift; uniform vec3 uCol, uCol2; uniform float uFade;
     void main() {
       vec3 t = texture2D(uTex, .15 + vUv * .7 + uShift).rgb;
-      float a = smoothstep(.42, .86, t.r), b = smoothstep(.5, .92, t.g);
+      float a = smoothstep(.4, .84, t.r), b = smoothstep(.46, .9, t.g);
       vec3 col = vec3(.012, .014, .03);
-      col += uCol * a * a * .2;                                        // gás na cor do capítulo
-      col += vec3(.18, .3, .95) * b * b * .16;                         // gás azul frio
-      col += vec3(.95, .35, .6) * a * b * .1;                          // onde os dois se cruzam
+      col += uCol * a * a * .27;                                       // gás na cor do planeta
+      col += uCol2 * b * b * .3;                                       // segunda cor da seção
+      col += mix(uCol, uCol2, .5) * a * b * .16;                       // onde os dois se cruzam
       col += vec3(.72, .8, 1.) * t.b * .13;                            // brilho difuso da Via Láctea
       vec2 v = vUv - .5;
       col *= 1. - dot(v, v) * .9;
@@ -254,7 +292,7 @@
       vec2 p = aP.xy;
       p.y = mod(p.y + uScroll * (.1 + depth * .6) + 1.3, 2.6) - 1.3;   // quanto mais perto, mais rápido passa
       p -= uMouse * (.02 + depth * .08);
-      p *= 1. + uWarp * uWarp * (1. + depth * 7.);                     // salto: as estrelas voam para fora
+      p *= 1. + uWarp * uWarp * (1. + depth * 7.);                     // dobra: as estrelas voam para fora
       gl_Position = vec4(p, 0., 1.);
       gl_PointSize = uPx * aS.x * (1. + uWarp * 3.);
       float tw = .7 + .3 * sin(uTime * (.6 + aS.y * 2.) + aS.y * 90.);
@@ -282,7 +320,7 @@
       float m = smoothstep(0., 1., clamp(uMix * 1.6 - aR.x * .6, 0., 1.));
       vec3 dir = normalize(aR.yzw - .5 + 1e-4);
       vec3 p = mix(aA, aB, m);
-      p += dir * sin(m * 3.14159) * (.3 + aR.x * .6);                  // explode no meio do caminho
+      p += dir * sin(m * 3.14159) * (.35 + aR.x * .75);                // explode no meio do caminho
       // ondas de duas fontes que se somam e se cancelam
       p.y += (sin(length(p.xz - vec2(.45, 0.)) * 9. - uTime * 1.8) + sin(length(p.xz + vec2(.45, 0.)) * 9. - uTime * 1.8)) * .045 * uRip;
       p += dir * sin(uTime * .7 + aR.x * 40.) * .008;                  // respiração
@@ -301,7 +339,7 @@
       float w = exp(-pow((length(dp) - uPulseT * 1.5) * 7., 2.)) * max(0., 1. - uPulseT);
       s += normalize(dp + 1e-5) / asp * .1 * w;
       gl_Position = vec4(s, 0., 1.);
-      gl_PointSize = uPx * (1.2 + aR.w * aR.w * 3.4) * (2.7 / max(z, .35)) * (1. + uVel * 1.4 + w * 2.5);
+      gl_PointSize = uPx * (1.2 + aR.w * aR.w * 3.4) * (2.7 / max(z, .35)) * (1. + uVel * 1.8 + w * 2.5);
       float tw = .62 + .38 * sin(uTime * (1. + aR.y * 2.) + aR.z * 50.);
       vCol = mix(mix(uColA, uColB, m), vec3(1.), aR.z * aR.z * .5);
       vA = tw * (.6 + .6 * smoothstep(4.8, 2.4, z)) * uDim;
@@ -354,7 +392,7 @@
       gl = canvas.getContext('webgl', { alpha: false, antialias: false, powerPreference: 'high-performance' });
       if (!gl) throw new Error('WebGL indisponível');
       prog.gen = build(QUAD_VERT, NEBULA_GEN, ['aQ'], ['uAspect']);
-      prog.show = build(QUAD_VERT, NEBULA_SHOW, ['aQ'], ['uTex', 'uShift', 'uCol', 'uFade']);
+      prog.show = build(QUAD_VERT, NEBULA_SHOW, ['aQ'], ['uTex', 'uShift', 'uCol', 'uCol2', 'uFade']);
       prog.stars = build(STAR_VERT, STAR_FRAG, ['aP', 'aS'], ['uMouse', 'uScroll', 'uTime', 'uPx', 'uWarp']);
       prog.fig = build(FIG_VERT, FIG_FRAG, ['aA', 'aB', 'aR'], ['uMix', 'uTime', 'uAspect', 'uPx', 'uScale', 'uRip', 'uVel', 'uPulseT', 'uDim', 'uRot', 'uMouse', 'uOff', 'uPulse', 'uColA', 'uColB']);
     } catch (err) {
@@ -367,7 +405,7 @@
     buffers.quad = makeBuffer(new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]));
 
     // figuras: só as desta página, mais a nuvem de abertura
-    for (const name of ['cloud', ...ORDER]) {
+    for (const name of new Set(['cloud', ...CHAPTERS.map((c) => c.shape)])) {
       const sample = SHAPES[name]();
       const data = new Float32Array(COUNT * 3);
       for (let i = 0; i < COUNT; i++) data.set(sample(), i * 3);
@@ -431,22 +469,18 @@
     paintNebula();
   }
 
-  // ------------------------------------------------------------------ estado
+  // ================================================================== estado
   const mouse = { x: 0, y: 0, tx: 0, ty: 0 };       // de -1 a 1, y para cima
   const pulse = { x: 0, y: 0, t0: -1e5 };
   const warp = { t0: null, href: '' };                // salto da página inicial para o portfólio
-  let scrollSmooth = scrollY, velocity = 0;
-  let introStart = null;
+  let scrollSmooth = scrollY, velocity = 0, velSigned = 0, lastVel = 0;
+  let introStart = null, lastMs = 0;
   let tops = [];
   let active = -1, lastAccent = '';
+  let col = CHAPTERS[0].color.slice();                // cor de destaque atual (interpolada)
 
-  function measure() {
-    tops = chapters.map((c) => c.getBoundingClientRect().top + scrollY);
-    sizeHScroll();
-  }
-
-  // Índice contínuo de capítulo: 0 no primeiro, 1 no segundo... A passagem
-  // acontece numa faixa em torno de cada fronteira, não ao longo da seção inteira.
+  // Índice contínuo de seção. A passagem acontece numa faixa em torno de cada
+  // fronteira, não ao longo da seção inteira.
   function chapterIndex(y) {
     let f = 0;
     const centre = y + vh / 2;
@@ -454,8 +488,10 @@
     return clamp(f, 0, LAST);
   }
 
-  // ------------------------------------------------------------------ interface
+  // ================================================================== leitura e trilho
   const hudN = $('#hud-n'), hudName = $('#hud-name'), hudFig = $('#hud-fig'), hudData = $('#hud-data');
+  const hudTotal = $('#hud-total');
+  if (hudTotal) hudTotal.textContent = chapters.length;
   const rail = $('.rail');
   if (rail) chapters.forEach((c) => {
     const a = document.createElement('a');
@@ -466,7 +502,7 @@
   });
   const railLinks = rail ? $$('a', rail) : [];
 
-  // letras embaralhadas que se assentam no nome do capítulo
+  // letras embaralhadas que se assentam no nome da seção
   let scrambleTimer = 0;
   function scramble(el, text) {
     if (still) { el.textContent = text; return; }
@@ -479,7 +515,6 @@
       if (step / 2 >= text.length) { clearInterval(scrambleTimer); el.textContent = text; }
     }, 28);
   }
-
   function setActive(i) {
     if (i === active || !chapters[i]) return;
     active = i;
@@ -489,7 +524,87 @@
     railLinks.forEach((a, k) => a.classList.toggle('active', k === i));
   }
 
-  // parágrafo que se acende palavra a palavra com a rolagem
+  // ================================================================== sistema solar (menu)
+  const system = $('.system');
+  const orbitsSvg = $('.orbits');
+  // f: raio da órbita (fração do maior).  a: ângulo inicial.  w: velocidade angular,
+  // que cai com o raio como manda a terceira lei de Kepler (T² ∝ a³, logo ω ∝ a^-1,5).
+  const planets = $$('.planet').map((el, i, all) => {
+    const f = 0.37 + 0.63 * Math.pow(i / Math.max(1, all.length - 1), 0.9);
+    return { el, f, a: 0.6 + i * 2.4, w: 0.07 * Math.pow(f, -1.5) };
+  });
+  let orbitTime = 0, orbitPaused = false, RX = 0, RY = 0;
+  function layoutSystem() {
+    if (!system) return;
+    const W = system.clientWidth, H = system.clientHeight;
+    const landscape = W > H * 0.9;
+    RX = landscape ? Math.min(W * 0.46, 680) : W * 0.37;
+    RY = landscape ? Math.min(RX * 0.5, H * 0.36) : Math.min(H * 0.29, RX * 1.9);
+    orbitsSvg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+    orbitsSvg.innerHTML = planets.map((p) => `<ellipse cx="${W / 2}" cy="${H / 2}" rx="${(RX * p.f).toFixed(1)}" ry="${(RY * p.f).toFixed(1)}"/>`).join('');
+  }
+  function updateSystem(dt) {
+    if (!orbitPaused && !still) orbitTime += dt;
+    for (const p of planets) {
+      const th = p.a + orbitTime * p.w, depth = Math.sin(th);
+      p.el.style.transform = `translate(-50%,-50%) translate3d(${(Math.cos(th) * RX * p.f).toFixed(1)}px,${(depth * RY * p.f).toFixed(1)}px,0) scale(${(0.86 + 0.14 * depth).toFixed(3)})`;
+      p.el.style.zIndex = depth > 0 ? 3 : 1;
+    }
+  }
+  planets.forEach((p) => {
+    for (const on of ['pointerenter', 'focus']) p.el.addEventListener(on, () => { orbitPaused = true; });
+    for (const off of ['pointerleave', 'blur']) p.el.addEventListener(off, () => { orbitPaused = false; });
+  });
+
+  // emblema de cada seção: uma cópia do planeta que a representa no menu
+  $$('.emblem').forEach((el) => {
+    const source = $(`.planet[data-planet="${el.dataset.planet}"] .orb`);
+    el.innerHTML = source ? source.outerHTML : '<span class="orb"><i class="ball"></i></span>';
+  });
+
+  // viagem até uma seção: um círculo na cor do planeta cobre a tela, a página salta e ele se dissolve
+  const wipe = $('.wipe');
+  let travelling = false;
+  function travel(index, x, y) {
+    const target = chapters[index];
+    if (!target || travelling) return;
+    const land = () => {
+      measure();
+      scrollTo(0, tops[index] + (index === 0 ? 0 : 1));
+      scrollSmooth = scrollY;
+      history.replaceState(null, '', '#' + target.id);
+      target.setAttribute('tabindex', '-1');
+      target.focus({ preventScroll: true });
+    };
+    if (still || !wipe) { land(); return; }
+    travelling = true;
+    wipe.style.setProperty('--x', x + 'px');
+    wipe.style.setProperty('--y', y + 'px');
+    wipe.style.setProperty('--wipe', `rgb(${CHAPTERS[index].color.join(' ')})`);
+    wipe.classList.remove('out');
+    wipe.classList.add('in');
+    setTimeout(() => { land(); wipe.classList.add('out'); wipe.classList.remove('in'); }, 640);
+    setTimeout(() => { wipe.classList.remove('out'); travelling = false; }, 1400);
+  }
+  document.addEventListener('click', (e) => {
+    const a = e.target.closest && e.target.closest('a[href^="#"]');
+    if (!a || e.metaKey || e.ctrlKey || e.shiftKey) return;
+    const index = chapters.findIndex((c) => c.id === a.getAttribute('href').slice(1));
+    if (index < 0) return;
+    e.preventDefault();
+    const r = a.getBoundingClientRect();
+    travel(index, e.clientX || r.left + r.width / 2, e.clientY || r.top + r.height / 2);
+  });
+
+  // ================================================================== efeitos de rolagem
+  // títulos: uma letra por <span>, para cada uma entrar no seu tempo
+  $$('.title').forEach((el) => {
+    const text = el.textContent;
+    el.setAttribute('aria-label', text);
+    el.innerHTML = [...text].map((ch, i) => `<span class="ch" aria-hidden="true" style="--i:${i}">${ch === ' ' ? '&nbsp;' : ch}</span>`).join('');
+  });
+
+  // parágrafo que se acende palavra a palavra
   const wordBlocks = $$('[data-words]').map((el) => {
     const words = el.textContent.trim().split(/\s+/);
     el.setAttribute('aria-label', words.join(' '));
@@ -497,27 +612,100 @@
     return { el, spans: $$('.w', el), shown: -1 };
   });
 
+  // Blocos que entram (.fx, .head) e fórmulas (.fm): as posições são medidas uma vez,
+  // sem os efeitos aplicados, e a cada quadro só se faz conta com a rolagem.
+  let fxItems = [], fmItems = [], fmFixed = [];
+  function measureFx() {
+    root.classList.add('measuring');
+    fxItems = $$('.fx, .head').filter((el) => !el.closest('.hscroll-track')).map((el) => ({ el, top: el.getBoundingClientRect().top + scrollY, last: -1 }));
+    fmItems = $$('.fm:not([data-h])').map((el) => {
+      const r = el.getBoundingClientRect();
+      return { el, mid: r.top + scrollY + r.height / 2, s: parseFloat(el.dataset.s || '0.2'), shown: true };
+    });
+    fmFixed = $$('.fm[data-h]').map((el) => ({ el, s: parseFloat(el.dataset.s || '0.2') }));
+    root.classList.remove('measuring');
+  }
+
   const timeline = $('.timeline');
   const timelineItems = timeline ? $$('li', timeline) : [];
-  const hero = $('.hero');
+  const hub = $('.hub');
+  const tickers = $$('.ticker-track').map((el) => ({ el, dir: parseFloat(el.dataset.dir || '1'), half: 0 }));
 
-  // seção de projetos: rolagem vertical convertida em movimento lateral
+  // projetos: rolagem vertical convertida em movimento lateral
   const hscroll = $('.hscroll'), track = $('.hscroll-track');
-  let hsDistance = 0, hsX = 0;
+  let hsDistance = 0, hsX = 0, panels = [];
   function sizeHScroll() {
     if (!hscroll) return;
     const pin = !still && innerWidth > 760 && innerHeight > 640;
     hscroll.classList.toggle('hs-pin', pin);
     const hint = $('.panel-hint');
-    if (hint) hint.textContent = pin ? 'Continue rolando: as missões passam de lado.' : 'Deslize para o lado para ver as missões.';
-    if (!pin) { hscroll.style.height = ''; track.style.transform = ''; hsDistance = 0; return; }
+    if (hint) hint.textContent = pin ? 'Continue rolando: os projetos passam de lado.' : 'Deslize para o lado para ver os projetos.';
+    panels = $$('.panel', track).map((el) => ({ el, x: el.offsetLeft + el.offsetWidth / 2 }));
+    if (!pin) {
+      hscroll.style.height = ''; track.style.transform = ''; hsDistance = 0;
+      panels.forEach((p) => { p.el.style.transform = ''; p.el.style.opacity = ''; });
+      return;
+    }
     hsDistance = Math.max(0, track.scrollWidth - innerWidth);
     hscroll.style.height = innerHeight + hsDistance + 'px';
   }
 
-  function scrollEffects() {
+  // onda do YouTube
+  const waveA = $('#wave-a'), waveB = $('#wave-b');
+  const waveBox = waveA ? waveA.closest('.wave') : null;
+  function drawWave(time, phase, amp) {
+    let a = '', b = '';
+    for (let i = 0; i <= 80; i++) {
+      const x = i / 80, env = Math.sin(x * Math.PI);
+      const ya = 60 + Math.sin(x * 22 - time * 3 + phase) * amp * env + Math.sin(x * 53 + time * 2) * amp * 0.25 * env;
+      const yb = 60 + Math.sin(x * 14 + time * 1.6 - phase * 0.6) * amp * 0.7 * env;
+      a += `${i ? 'L' : 'M'}${(x * 1000).toFixed(0)} ${ya.toFixed(1)}`;
+      b += `${i ? 'L' : 'M'}${(x * 1000).toFixed(0)} ${yb.toFixed(1)}`;
+    }
+    waveA.setAttribute('d', a);
+    waveB.setAttribute('d', b);
+  }
+
+  function measure() {
+    sizeHScroll();
+    layoutSystem();
+    tops = chapters.map((c) => c.getBoundingClientRect().top + scrollY);
+    measureFx();
+    tickers.forEach((t) => { t.half = t.el.scrollWidth / 2; });
+    sizeRoad();
+  }
+
+  function scrollEffects(time) {
     root.style.setProperty('--prog', clamp(scrollY / Math.max(1, root.scrollHeight - vh)).toFixed(4));
-    if (hero) hero.style.setProperty('--hp', clamp(scrollSmooth / vh).toFixed(4));
+
+    // velocidade com sinal: inclina os blocos e separa as cores dos títulos
+    const v = Math.abs(velSigned) < 0.01 ? 0 : Math.round(clamp(velSigned, -1, 1) * 100) / 100;
+    if (v !== lastVel) { lastVel = v; root.style.setProperty('--vel', v); }
+
+    // seleção: a câmera mergulha no sistema solar conforme se rola
+    if (hub) {
+      const hp = clamp(scrollSmooth / (vh * 0.62));
+      hub.style.setProperty('--hp', hp.toFixed(4));
+      hub.style.setProperty('--mx', mouse.x.toFixed(3));
+      hub.style.setProperty('--my', mouse.y.toFixed(3));
+    }
+
+    for (const it of fxItems) {
+      const e = still ? 1 : ease(clamp((scrollSmooth + vh * 0.98 - it.top) / (vh * 0.42)));
+      if (Math.abs(e - it.last) > 0.002) { it.last = e; it.el.style.setProperty('--e', e.toFixed(3)); }
+    }
+
+    // fórmulas: cada uma desliza numa velocidade própria e some ao se afastar do centro
+    for (const it of fmItems) {
+      const d = scrollSmooth + vh / 2 - it.mid;
+      if (Math.abs(d) > vh * 1.3) { if (it.shown) { it.shown = false; it.el.style.opacity = 0; } continue; }
+      it.shown = true;
+      it.el.style.transform = still ? '' : `translate3d(${(mouse.x * it.s * 60).toFixed(1)}px,${(d * it.s).toFixed(1)}px,0) rotate(${(d * it.s * 0.012).toFixed(2)}deg)`;
+      it.el.style.opacity = (clamp(1 - Math.abs(d) / (vh * 0.9)) * 0.55).toFixed(3);
+    }
+    for (const it of fmFixed) it.el.style.transform = still ? '' : `translate3d(${(hsX * it.s + mouse.x * it.s * 70).toFixed(1)}px,${(-mouse.y * it.s * 50).toFixed(1)}px,0)`;
+
+    for (const t of tickers) if (t.half) t.el.style.transform = `translate3d(${(-(((scrollSmooth * 0.7 * t.dir) % t.half) + t.half) % t.half).toFixed(1)}px,0,0)`;
 
     for (const block of wordBlocks) {
       const r = block.el.getBoundingClientRect();
@@ -528,27 +716,187 @@
 
     if (timeline) {
       const r = timeline.getBoundingClientRect();
-      const p = clamp((vh * 0.62 - r.top) / r.height);
-      timeline.style.setProperty('--tp', p.toFixed(4));
-      const lineY = r.top + r.height * p;
-      timelineItems.forEach((li) => li.classList.toggle('lit', li.getBoundingClientRect().top <= lineY + 4));
+      if (r.bottom > -vh && r.top < vh * 2) {
+        const p = clamp((vh * 0.62 - r.top) / r.height);
+        timeline.style.setProperty('--tp', p.toFixed(4));
+        const lineY = r.top + r.height * p;
+        timelineItems.forEach((li, i) => li.classList.toggle('lit', r.top + (r.height * i) / timelineItems.length <= lineY - 10));
+      }
     }
 
     if (hsDistance > 0) {
       const p = clamp(-hscroll.getBoundingClientRect().top / hsDistance);
       hsX = lerp(hsX, -p * hsDistance, 0.16);
       track.style.transform = `translate3d(${hsX.toFixed(1)}px,0,0)`;
+      // cada painel gira conforme a distância do centro da tela
+      for (const pn of panels) {
+        const d = clamp((pn.x + hsX - vw / 2) / vw, -1.2, 1.2);
+        pn.el.style.transform = `perspective(1300px) rotateY(${(d * -34).toFixed(2)}deg) translateZ(${(-Math.abs(d) * 220).toFixed(1)}px)`;
+        pn.el.style.opacity = clamp(1.25 - Math.abs(d) * 0.9).toFixed(3);
+      }
+    }
+
+    if (waveBox) {
+      const r = waveBox.getBoundingClientRect();
+      if (r.bottom > 0 && r.top < vh) drawWave(time, scrollSmooth * 0.012, 16 + velocity * 34);
     }
   }
 
-  // ------------------------------------------------------------------ quadro a quadro
+  // ================================================================== estrada
+  // Uma estrada em perspectiva num canvas 2D transparente (o céu aparece atrás).
+  // rp vai de 0 a 1 ao longo da seção; a velocidade do carro cresce com ele.
+  const road = $('.road'), roadCanvas = $('#road-canvas');
+  const rctx = roadCanvas ? roadCanvas.getContext('2d') : null;
+  const car = $('.car');
+  const rd = { v: $('#rd-v'), u: $('#rd-u'), g: $('#rd-g'), d: $('#rd-d'), bar: $('#rd-bar') };
+  const C_KMH = 1079252848.8, TRIP_KM = 384400;       // velocidade da luz; a viagem tem a distância Terra–Lua
+  const SIGNS = ['v = v₀ + at', 'Δs = v₀t + ½at²', 'F = ma', 'E = ½mv²', 'p = γmv', 'E = γmc²', 'γ = 1/√(1 − v²/c²)', "t' = γt", "L' = L/γ"];
+  const streaks = Array.from({ length: 90 }, () => ({ a: Math.random() * TAU, r: Math.random(), s: 0.4 + Math.random() }));
+  let roadTop = 0, roadHeight = 1, roadDist = 0, rp = 0, carX = 0, roadDpr = 1;
+  const nf = new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 0 });
+
+  function sizeRoad() {
+    if (!road) return;
+    roadTop = road.getBoundingClientRect().top + scrollY;
+    roadHeight = road.offsetHeight;
+    roadDpr = Math.min(devicePixelRatio || 1, 1.5);
+    roadCanvas.width = Math.round(roadCanvas.clientWidth * roadDpr);
+    roadCanvas.height = Math.round(roadCanvas.clientHeight * roadDpr);
+  }
+
+  function updateRoad(dt, time) {
+    if (!road) return;
+    rp = clamp((scrollSmooth - roadTop) / Math.max(1, roadHeight - vh));
+    if (scrollSmooth < roadTop - vh || scrollSmooth > roadTop + roadHeight) return;   // fora da tela
+
+    // o carro anda sozinho na velocidade atual; rolar é o acelerador
+    const speed = still ? 0 : 0.1 + rp * rp * 2.5;
+    roadDist += speed * dt * 60;
+
+    const W = roadCanvas.width, H = roadCanvas.height, ctx = rctx;
+    const y0 = H * 0.46, x0 = W / 2 - mouse.x * W * 0.035, f = H * 0.9;
+    const RW = 1.7, zN = 1.55, zF = 150;
+    const P = (x, y, z) => [x0 + (x * f) / z, y0 + ((1 - y) * f) / z];
+    const rgb = col.join(',');
+    const quad = (pts) => { ctx.beginPath(); pts.forEach((p, i) => (i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1]))); ctx.closePath(); ctx.fill(); };
+    const line = (a, b) => { ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke(); };
+    ctx.clearRect(0, 0, W, H);
+
+    // brilho no horizonte, onde está o destino
+    let g = ctx.createRadialGradient(x0, y0, 0, x0, y0, H * 0.55);
+    g.addColorStop(0, `rgba(${rgb},${0.22 + rp * 0.4})`);
+    g.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, W, H);
+
+    // riscos de velocidade saindo do ponto de fuga
+    if (rp > 0.2 && !still) {
+      const k = (rp - 0.2) / 0.8, R = Math.hypot(W, H) * 0.6;
+      ctx.lineWidth = Math.max(1, W / 900);
+      for (const s of streaks) {
+        s.r += s.s * k * k * dt * 1.6;
+        if (s.r > 1) { s.r = 0.02; s.a = Math.random() * TAU; }
+        const r1 = s.r * R, r2 = r1 + (20 + k * k * 240) * s.r * roadDpr;
+        ctx.strokeStyle = `rgba(255,255,255,${(k * 0.75 * s.r).toFixed(3)})`;
+        line([x0 + Math.cos(s.a) * r1, y0 + Math.sin(s.a) * r1], [x0 + Math.cos(s.a) * r2, y0 + Math.sin(s.a) * r2]);
+      }
+    }
+
+    // pista
+    g = ctx.createLinearGradient(0, y0, 0, H);
+    g.addColorStop(0, 'rgba(6,6,14,0)');
+    g.addColorStop(0.2, 'rgba(6,6,14,.84)');
+    g.addColorStop(1, 'rgba(12,12,24,.95)');
+    ctx.fillStyle = g;
+    quad([P(-RW, 0, zN), P(RW, 0, zN), P(RW, 0, zF), P(-RW, 0, zF)]);
+
+    // travessas e tracejado: é o que dá a sensação de velocidade
+    ctx.strokeStyle = `rgba(${rgb},.2)`;
+    ctx.lineWidth = 1;
+    for (let z = 3 - (roadDist % 3); z < 70; z += 3) if (z > zN) line(P(-RW, 0, z), P(RW, 0, z));
+    ctx.fillStyle = 'rgba(255,255,255,.88)';
+    for (const x of [-RW / 3, RW / 3]) {
+      for (let z = 6 - (roadDist % 6) - 6; z < 120; z += 6) {
+        const z1 = Math.max(z, zN), z2 = z + 2.6;
+        if (z2 > zN) quad([P(x - 0.035, 0, z1), P(x + 0.035, 0, z1), P(x + 0.035, 0, z2), P(x - 0.035, 0, z2)]);
+      }
+    }
+
+    // bordas iluminadas
+    ctx.strokeStyle = `rgb(${rgb})`;
+    ctx.lineWidth = Math.max(2, W / 520);
+    ctx.shadowColor = `rgb(${rgb})`;
+    ctx.shadowBlur = 20 * roadDpr;
+    line(P(-RW, 0, zN), P(-RW, 0, zF));
+    line(P(RW, 0, zN), P(RW, 0, zF));
+    ctx.shadowBlur = 0;
+
+    // postes de luz
+    for (let z = 12 - (roadDist % 12) + 108; z > zN; z -= 12) {
+      const alpha = clamp(1.25 - z / 100);
+      for (const side of [-1, 1]) {
+        const base = P(side * (RW + 0.4), 0, z), top = P(side * (RW + 0.4), 0.6, z);
+        ctx.strokeStyle = `rgba(${rgb},${(alpha * 0.8).toFixed(3)})`;
+        ctx.lineWidth = Math.max(1, (0.035 * f) / z);
+        line(base, top);
+        ctx.fillStyle = `rgba(255,255,255,${alpha.toFixed(3)})`;
+        ctx.beginPath(); ctx.arc(top[0], top[1], Math.max(1, (0.05 * f) / z), 0, TAU); ctx.fill();
+      }
+    }
+
+    // placas com as fórmulas do movimento, de um lado e do outro
+    const SPACING = 70;
+    for (let n = Math.ceil((roadDist + 150) / SPACING); n * SPACING - roadDist > zN + 0.4; n--) {
+      const z = n * SPACING - roadDist, side = n % 2 ? 1 : -1, px = (0.3 * f) / z;
+      if (px < 6) continue;
+      const alpha = clamp(1.3 - z / 120), text = SIGNS[((n % SIGNS.length) + SIGNS.length) % SIGNS.length];
+      const foot = P(side * (RW + 1.25), 0, z), head = P(side * (RW + 1.25), 1.05, z);
+      ctx.strokeStyle = `rgba(${rgb},${alpha.toFixed(3)})`;
+      ctx.lineWidth = Math.max(1, px * 0.08);
+      line(foot, head);
+      ctx.font = `italic ${px.toFixed(1)}px Georgia, 'Times New Roman', serif`;
+      const tw = ctx.measureText(text).width + px * 1.3, th = px * 1.9;
+      ctx.fillStyle = `rgba(6,7,16,${(alpha * 0.86).toFixed(3)})`;
+      ctx.fillRect(head[0] - tw / 2, head[1] - th, tw, th);
+      ctx.strokeRect(head[0] - tw / 2, head[1] - th, tw, th);
+      ctx.fillStyle = `rgba(255,255,255,${alpha.toFixed(3)})`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(text, head[0], head[1] - th / 2);
+    }
+
+    // carro: o mouse dirige; trepida mais quanto mais rápido
+    const targetX = mouse.x * Math.min(vw * 0.17, 230);
+    const lean = clamp((targetX - carX) * 0.05, -7, 7);
+    carX = lerp(carX, targetX, 0.07);
+    const shake = still ? 0 : Math.sin(time * 38) * rp * 2.2 + Math.sin(time * 5.3) * 1.2;
+    car.style.transform = `translate3d(${carX.toFixed(1)}px,${shake.toFixed(1)}px,0) rotate(${lean.toFixed(2)}deg)`;
+    car.style.setProperty('--fire', (rp * 5 * (still ? 1 : 0.75 + Math.random() * 0.5)).toFixed(2));
+
+    // painel: de 60 km/h até muito perto da velocidade da luz, em escala logarítmica
+    const kmh = 60 * Math.pow(C_KMH / 60, rp), beta = Math.min(kmh / C_KMH, 0.99995);
+    const gamma = 1 / Math.sqrt(1 - beta * beta);
+    if (kmh < 1e6) { rd.v.textContent = nf.format(kmh); rd.u.textContent = 'km/h'; }
+    else { rd.v.textContent = beta.toFixed(5).replace('.', ','); rd.u.textContent = 'c'; }
+    rd.g.textContent = gamma.toFixed(4).replace('.', ',');
+    const left = TRIP_KM * (1 - rp);
+    rd.d.textContent = rp >= 0.985 ? 'Destino: Contato' : `Destino: Contato, faltam ${nf.format(left)} km`;
+    rd.bar.style.width = (rp * 100).toFixed(1) + '%';
+    road.classList.toggle('arrived', rp >= 0.985);
+    road.style.setProperty('--flash', (clamp((rp - 0.9) / 0.1) ** 3 * 0.85).toFixed(3));
+  }
+
+  // ================================================================== quadro a quadro
   function frame(ms) {
     const time = still ? 0 : ms / 1000;
+    const dt = Math.min(0.05, (ms - lastMs) / 1000 || 0.016);
+    lastMs = ms;
     const target = scrollY;
     const before = scrollSmooth;
     scrollSmooth = still ? target : lerp(scrollSmooth, target, 0.13);
     if (Math.abs(target - scrollSmooth) < 0.05) scrollSmooth = target;
-    velocity = lerp(velocity, clamp(Math.abs(scrollSmooth - before) / 70), 0.18);
+    velSigned = lerp(velSigned, clamp((scrollSmooth - before) / 60, -1, 1), 0.2);
+    velocity = Math.abs(velSigned);
     mouse.x = lerp(mouse.x, mouse.tx, still ? 1 : 0.07);
     mouse.y = lerp(mouse.y, mouse.ty, still ? 1 : 0.07);
 
@@ -556,14 +904,18 @@
     const i = Math.max(0, Math.min(Math.floor(f), LAST - 1));
     const mix = f - i;
     const A = CHAPTERS[i], B = CHAPTERS[Math.min(i + 1, LAST)];
-    const col = A.color.map((c, k) => Math.round(lerp(c, B.color[k], mix)));
+    col = A.color.map((c, k) => Math.round(lerp(c, B.color[k], mix)));
+    const col2 = A.color2.map((c, k) => lerp(c, B.color2[k], mix) / 255);
     const accent = `rgb(${col[0]} ${col[1]} ${col[2]})`;
     if (accent !== lastAccent) { lastAccent = accent; root.style.setProperty('--accent', accent); }
     setActive(Math.round(f));
     if (hudData) hudData.textContent = `x ${mouse.x >= 0 ? '+' : ''}${mouse.x.toFixed(2)}  y ${mouse.y >= 0 ? '+' : ''}${mouse.y.toFixed(2)}`;
-    scrollEffects();
 
-    // salto para o portfólio: 0 parado, 1 no fim (quando a página troca)
+    scrollEffects(time);
+    if (system && scrollSmooth < vh * 1.3) updateSystem(dt);
+    updateRoad(dt, time);
+
+    // salto da página inicial para o portfólio: 0 parado, 1 no fim (quando a página troca)
     let jump = 0;
     if (warp.t0 !== null) {
       jump = clamp((ms - warp.t0) / 950);
@@ -575,6 +927,9 @@
       const intro = still ? 1 : clamp((ms - introStart) / 2600);
       const wide = vw > 900;
       const scrollUnits = (scrollSmooth / vh) * 0.25;
+      // quanto a estrada pesa neste instante (1 no meio dela)
+      const onRoad = ROAD < 0 ? 0 : clamp(1 - Math.abs(f - ROAD));
+      const hp = hub ? clamp(scrollSmooth / (vh * 0.62)) : 0;
 
       gl.viewport(0, 0, canvas.width, canvas.height);
       gl.clear(gl.COLOR_BUFFER_BIT);
@@ -586,12 +941,13 @@
       gl.activeTexture(gl.TEXTURE0);
       gl.bindTexture(gl.TEXTURE_2D, nebulaTexture);
       gl.uniform1i(prog.show.u.uTex, 0);
-      gl.uniform2f(prog.show.u.uShift, mouse.x * 0.012, mouse.y * 0.012 - Math.min(0.13, scrollUnits * 0.1 * 0.35));
+      gl.uniform2f(prog.show.u.uShift, mouse.x * 0.014, mouse.y * 0.014 - Math.min(0.13, scrollUnits * 0.1 * 0.35));
       gl.uniform3f(prog.show.u.uCol, col[0] / 255, col[1] / 255, col[2] / 255);
+      gl.uniform3f(prog.show.u.uCol2, col2[0], col2[1], col2[2]);
       gl.uniform1f(prog.show.u.uFade, ease(clamp(intro * 2)) * (1 - jump * jump * jump));
       gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
 
-      // 2. estrelas de fundo
+      // 2. estrelas de fundo: afastam-se com a velocidade da rolagem e na estrada
       gl.enable(gl.BLEND);
       gl.useProgram(prog.stars.p);
       attributes([[buffers.starPos, 3], [buffers.starLook, 3]]);
@@ -599,13 +955,18 @@
       gl.uniform1f(prog.stars.u.uScroll, scrollUnits);
       gl.uniform1f(prog.stars.u.uTime, time);
       gl.uniform1f(prog.stars.u.uPx, dpr);
-      gl.uniform1f(prog.stars.u.uWarp, jump);
+      gl.uniform1f(prog.stars.u.uWarp, Math.max(jump, velocity * 0.3 + onRoad * rp * rp * 0.45));
       gl.drawArrays(gl.POINTS, 0, STARS);
 
       // 3. figura
-      let from = A.shape, to = B.shape, m = mix, zoom = 1;
+      const same = A.shape === B.shape;
+      let from = A.shape, to = B.shape, m = same ? 0 : mix, zoom = 1;
       if (jump > 0) { from = A.shape; to = 'cloud'; m = ease(jump); zoom = 1 + jump * jump * 2.2; }   // desfaz-se no salto
       else if (intro < 1 && f < 0.5) { from = 'cloud'; to = A.shape; m = ease(intro); }               // forma-se na abertura
+      else if (!same) zoom = 1 + Math.sin(mix * Math.PI) * 0.45;                                       // atravessa a figura ao trocar
+      // na seleção, o Sol cresce conforme a câmera mergulha; na estrada, o destino se aproxima
+      const scaleOf = (c) => (c.road ? lerp(0.26, 0.66, rp) : c === CHAPTERS[0] && hub ? c.scale * (1 + hp * 1.6) : c.scale);
+      const yOf = (c) => (!wide && c.ySmall !== undefined ? c.ySmall : c.y !== undefined ? c.y : wide ? 0 : 0.12);
       const u = prog.fig.u;
       gl.useProgram(prog.fig.p);
       attributes([[buffers[from], 3], [buffers[to], 3], [buffers.random, 4]]);
@@ -613,23 +974,25 @@
       gl.uniform1f(u.uTime, time);
       gl.uniform1f(u.uAspect, vw / vh);
       gl.uniform1f(u.uPx, dpr * (vw < 700 ? 0.8 : 1));
-      gl.uniform1f(u.uScale, lerp(A.scale, B.scale, mix) * (wide ? 1 : 0.78) * zoom);
+      gl.uniform1f(u.uScale, lerp(scaleOf(A), scaleOf(B), mix) * (wide ? 1 : 0.78) * zoom);
       gl.uniform1f(u.uRip, lerp(A.rip, B.rip, mix));
       gl.uniform1f(u.uVel, velocity);
       gl.uniform1f(u.uPulseT, clamp((ms - pulse.t0) / 1400));
       gl.uniform1f(u.uDim, (wide ? 1 : 0.9) * (1 - jump * 0.6));
-      gl.uniform2f(u.uRot, time * 0.06 + scrollSmooth * 0.0007 + mouse.x * 0.55, lerp(A.tilt, B.tilt, mix) - mouse.y * 0.28);
+      gl.uniform2f(u.uRot, time * 0.06 + scrollSmooth * 0.0009 + mouse.x * 0.55, lerp(A.tilt, B.tilt, mix) - mouse.y * 0.28);
       gl.uniform2f(u.uMouse, mouse.x, mouse.y);
-      gl.uniform2f(u.uOff, wide ? lerp(A.off, B.off, mix) * (1 - jump) : 0, wide ? 0 : 0.12);
+      gl.uniform2f(u.uOff, wide ? lerp(A.off, B.off, mix) * (1 - jump) : 0, lerp(yOf(A), yOf(B), mix));
       gl.uniform2f(u.uPulse, pulse.x, pulse.y);
-      gl.uniform3f(u.uColA, A.color[0] / 255, A.color[1] / 255, A.color[2] / 255);
-      gl.uniform3f(u.uColB, B.color[0] / 255, B.color[1] / 255, B.color[2] / 255);
+      // entre duas seções com a mesma figura não há troca de forma: a cor muda por igual
+      const cA = same ? col : A.color, cB = same ? col : B.color;
+      gl.uniform3f(u.uColA, cA[0] / 255, cA[1] / 255, cA[2] / 255);
+      gl.uniform3f(u.uColB, cB[0] / 255, cB[1] / 255, cB[2] / 255);
       gl.drawArrays(gl.POINTS, 0, COUNT);
     }
     requestAnimationFrame(frame);
   }
 
-  // ------------------------------------------------------------------ entradas
+  // ================================================================== entradas
   addEventListener('pointermove', (e) => {
     mouse.tx = (e.clientX / vw) * 2 - 1;
     mouse.ty = -((e.clientY / vh) * 2 - 1);
@@ -672,15 +1035,15 @@
         el.addEventListener('animationend', () => el.remove());
         document.body.append(el);
       }
-      setTimeout(meteor, 5000 + Math.random() * 9000);
+      setTimeout(meteor, 3000 + Math.random() * 6000);
     };
-    setTimeout(meteor, 3500);
+    setTimeout(meteor, 2500);
   }
 
   if (finePointer && !still) {
     root.classList.add('has-cursor');
-    const cursor = $('.cursor'), dot = $('i', cursor), ring = $('b', cursor);
-    let cx = vw / 2, cy = vh / 2, rx = cx, ry = cy;
+    const cursor = $('.cursor'), dot = $('i', cursor), ring = $('b', cursor), glow = $('.cursor-glow');
+    let cx = vw / 2, cy = vh / 2, rx = cx, ry = cy, gx = cx, gy = cy;
     addEventListener('pointermove', (e) => {
       cx = e.clientX; cy = e.clientY;
       dot.style.transform = `translate3d(${cx}px,${cy}px,0)`;
@@ -688,7 +1051,9 @@
     }, { passive: true });
     (function follow() {
       rx = lerp(rx, cx, 0.18); ry = lerp(ry, cy, 0.18);
+      gx = lerp(gx, cx, 0.06); gy = lerp(gy, cy, 0.06);
       ring.style.transform = `translate3d(${rx.toFixed(1)}px,${ry.toFixed(1)}px,0)`;
+      if (glow) glow.style.transform = `translate3d(${gx.toFixed(1)}px,${gy.toFixed(1)}px,0)`;
       requestAnimationFrame(follow);
     })();
 
@@ -703,51 +1068,35 @@
     });
   }
 
-  // entrada dos blocos ao aparecerem na tela
-  const revealables = $$('.rv');
-  if ('IntersectionObserver' in window && !still) {
-    const io = new IntersectionObserver((entries) => {
-      for (const entry of entries) if (entry.isIntersecting) { entry.target.classList.add('in'); io.unobserve(entry.target); }
-    }, { rootMargin: '0px 0px -10% 0px' });
-    revealables.forEach((el) => io.observe(el));
-    $$('.panel-intro .display').forEach((el) => io.observe(el));
-  } else {
-    revealables.forEach((el) => el.classList.add('in'));
-    $$('.display').forEach((el) => el.classList.add('in'));
-  }
-
-  // menu no celular
-  const menuButton = $('.menu-toggle'), menu = $('#menu');
-  if (menuButton && menu) {
-    const setMenu = (open) => {
-      menu.classList.toggle('open', open);
-      menuButton.setAttribute('aria-expanded', String(open));
-      menuButton.textContent = open ? 'Fechar' : 'Menu';
-    };
-    menuButton.addEventListener('click', () => setMenu(!menu.classList.contains('open')));
-    $$('a', menu).forEach((a) => a.addEventListener('click', () => setMenu(false)));
-    addEventListener('keydown', (e) => { if (e.key === 'Escape') setMenu(false); });
-  }
-
   // copiar e-mail
   const copy = $('#copy-email');
   if (copy) copy.addEventListener('click', async () => {
     const status = $('#copy-status');
     try {
       await navigator.clipboard.writeText('luiizan12@gmail.com');
-      status.textContent = 'E-mail copiado. Próxima missão: sua mensagem.';
+      status.textContent = 'E-mail copiado.';
     } catch {
       status.textContent = 'Seu navegador não permitiu copiar. E-mail: luiizan12@gmail.com';
     }
   });
 
-  // ------------------------------------------------------------------ partida
+  // ================================================================== partida
   initGL();
   resizeGL();
   measure();
-  addEventListener('resize', () => { resizeGL(); measure(); });
-  addEventListener('load', measure);
-  if (document.fonts && document.fonts.ready) document.fonts.ready.then(measure);
+  let remeasure = 0;
+  const scheduleMeasure = () => { cancelAnimationFrame(remeasure); remeasure = requestAnimationFrame(measure); };
+  addEventListener('resize', () => { resizeGL(); scheduleMeasure(); });
+  addEventListener('load', scheduleMeasure);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(scheduleMeasure);
+  // imagens que carregam depois mudam a altura da página: mede de novo
+  if ('ResizeObserver' in window) {
+    let lastHeight = 0;
+    new ResizeObserver(() => {
+      const h = root.scrollHeight;
+      if (Math.abs(h - lastHeight) > 2) { lastHeight = h; scheduleMeasure(); }
+    }).observe(document.body);
+  }
   requestAnimationFrame(() => requestAnimationFrame(() => root.classList.add('ready')));
   requestAnimationFrame(frame);
 })();
