@@ -4,15 +4,17 @@ Portfólio pessoal publicado em https://luizasenacafe.github.io/ pelo GitHub Pag
 
 ## Como funciona
 
-A página é uma só (`index.html`), dividida em sete capítulos. Um fundo fixo de partículas em WebGL assume uma forma por capítulo (estrela, galáxia, malha do espaço-tempo, nó, hélice, onda e buraco negro) e migra de uma para a outra conforme a rolagem. O cursor gira a cena e afasta as partículas; um clique dispara uma onda. A cor de destaque muda junto, do vermelho ao azul.
+São duas páginas: `index.html` é a página inicial (um botão para entrar no portfólio e outro para baixar o currículo) e `portfolio.html` é o portfólio, dividido em sete capítulos.
+
+O fundo é um céu desenhado em WebGL, em três camadas: nebulosa com a faixa da Via Láctea, estrelas em várias profundidades e uma figura de partículas que muda a cada capítulo. As figuras são um planeta com anéis (página inicial), uma estrela, uma galáxia espiral barrada, a malha do espaço-tempo, um átomo, a dupla hélice do DNA, a interferência de duas ondas e um buraco negro com jatos. Ao rolar, a figura migra de uma forma para a seguinte e o céu desliza em paralaxe. O cursor gira a figura, afasta as partículas e desloca o céu; um clique dispara uma onda. A cor de destaque muda junto, do vermelho ao azul.
 
 ## Edição
 
-- `index.html`: todo o conteúdo (textos, projetos, experiências, formação e links).
-- `assets/cosmos.css`: identidade visual e layout responsivo.
-- `assets/cosmos.js`: partículas e efeitos de rolagem. A lista `CHAPTERS` no topo define forma, cor e posição de cada capítulo, na mesma ordem das seções do HTML.
+- `index.html`: página inicial.
+- `portfolio.html`: todo o conteúdo (textos, projetos, experiências, formação e links).
+- `assets/cosmos.css`: identidade visual e layout responsivo das duas páginas.
+- `assets/cosmos.js`: céu, figuras e efeitos de rolagem. `FIGURES` define cor, inclinação e posição de cada figura; `ORDER` diz quais aparecem em cada página, na mesma ordem das seções do HTML; `SHAPES` descreve como cada figura é construída.
 - `assets/fonts/`: fontes servidas pelo próprio site (Instrument Serif, Instrument Sans e JetBrains Mono, licença SIL Open Font).
-- `portfolio.html`: apenas redireciona links antigos para a página principal.
 
 Não há dependências nem etapa de compilação. Para visualizar localmente, use um servidor HTTP na raiz do repositório, por exemplo `python -m http.server 8765`.
 

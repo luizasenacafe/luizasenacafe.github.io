@@ -1,6 +1,6 @@
 /* Portfólio de Luiza Sena.
-   Um fundo fixo de partículas (canvas, em cosmos.js) carrega o espetáculo;
-   o conteúdo por cima fica quieto de propósito. A cor de destaque (--accent)
+   O céu (nebulosa, estrelas e a figura de partículas) é desenhado no canvas
+   por cosmos.js; o conteúdo por cima fica quieto de propósito. A cor de destaque (--accent)
    é reescrita pelo JS a cada capítulo, do vermelho de uma supergigante ao
    azul de uma estrela quente. */
 
@@ -61,20 +61,6 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outlin
 /* ---------- camadas de fundo ---------- */
 #cosmos { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 0; display: block; }
 .no-gl #cosmos { display: none; }
-.nebula { position: fixed; inset: -20%; z-index: 1; pointer-events: none; mix-blend-mode: screen; }
-.nebula i {
-  position: absolute;
-  width: 62vmax;
-  height: 62vmax;
-  border-radius: 50%;
-  background: radial-gradient(closest-side, var(--accent), transparent 72%);
-  opacity: .13;
-  /* --mx/--my vêm do cursor (de -1 a 1); cada nuvem tem a sua profundidade */
-  transform: translate3d(calc(var(--mx, 0) * var(--d) * 1px), calc(var(--my, 0) * var(--d) * 1px), 0);
-}
-.nebula i:nth-child(1) { --d: -70; right: 0; top: 4%; }
-.nebula i:nth-child(2) { --d: 120; left: 2%; bottom: 0; opacity: .08; filter: hue-rotate(70deg); }
-.nebula i:nth-child(3) { --d: -190; left: 38%; top: 34%; width: 34vmax; height: 34vmax; opacity: .07; filter: hue-rotate(-50deg); }
 .grain {
   position: fixed;
   inset: 0;
@@ -84,6 +70,29 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outlin
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 .progress { position: fixed; left: 0; top: 0; z-index: 70; height: 2px; width: 100%; background: var(--accent); transform-origin: 0 50%; transform: scaleX(var(--prog, 0)); }
+
+/* estrela cadente: um risco curto que cruza o céu e some */
+.meteor {
+  position: fixed;
+  z-index: 1;
+  width: 150px;
+  height: 1px;
+  pointer-events: none;
+  background: linear-gradient(90deg, transparent, rgb(255 255 255 / .9));
+  rotate: 152deg;
+  transform-origin: 100% 50%;
+  animation: meteor 1s ease-out forwards;
+}
+@keyframes meteor {
+  from { opacity: 0; translate: 0 0; scale: .2 1; }
+  15% { opacity: 1; }
+  to { opacity: 0; translate: -34vw 18vw; scale: 1 1; }
+}
+
+/* véu que escurece a página inicial durante o salto para o portfólio */
+.veil { position: fixed; inset: 0; z-index: 95; background: #000; opacity: 0; pointer-events: none; transition: opacity .35s .6s; }
+.leaving .veil { opacity: 1; }
+.leaving main, .leaving .top, .leaving .hud { opacity: 0; transition: opacity .35s; }
 
 /* cursor próprio, só com mouse e JS ativos */
 .cursor { display: none; }
@@ -122,6 +131,9 @@ a:focus-visible, button:focus-visible { outline: 2px solid var(--accent); outlin
 .hud b { color: var(--accent); font-weight: 400; }
 .hud > span { padding: 5px 10px; border-radius: 999px; background: rgb(4 5 10 / .78); }
 .hud #hud-name { margin-left: 10px; color: var(--ink); }
+.hud #hud-name:first-child { margin-left: 0; }
+.hud #hud-fig { margin-left: 10px; font-family: var(--sans); font-size: 13px; }
+.hud #hud-fig:empty { display: none; }
 .hud-data { white-space: pre; }
 .rail { position: fixed; right: 18px; top: 50%; z-index: 50; display: flex; flex-direction: column; gap: 14px; translate: 0 -50%; }
 .rail a { position: relative; display: block; width: 10px; height: 10px; border: 1px solid var(--dim); border-radius: 50%; transition: background .3s, border-color .3s, scale .3s; }
@@ -180,6 +192,10 @@ h2.display { font-size: clamp(42px, 6.6vw, 100px); margin-bottom: clamp(28px, 5v
 .hint { position: absolute; left: 50%; bottom: 26px; translate: -50% 0; font-size: 13px; color: var(--dim); white-space: nowrap; opacity: calc(1 - var(--hp, 0) * 4); }
 .js .hero .kicker, .js .hero .hero-text, .js .hero .actions, .js .hero .hero-foot, .js .hint { transition: opacity 1.2s .5s; }
 .js:not(.ready) .hero .kicker, .js:not(.ready) .hero .hero-text, .js:not(.ready) .hero .actions, .js:not(.ready) .hero .hero-foot, .js:not(.ready) .hint { opacity: 0; }
+
+/* página inicial: um ecrã só, sem rolagem */
+.welcome { min-height: 100svh; }
+.welcome .display { font-size: min(clamp(64px, 12vw, 190px), 22vh); }
 
 /* ---------- 2. sobre ---------- */
 .about-grid { display: flex; justify-content: flex-end; }
@@ -291,7 +307,7 @@ h2.display { font-size: clamp(42px, 6.6vw, 100px); margin-bottom: clamp(28px, 5v
 }
 @media (max-width: 760px) {
   body { font-size: 16px; }
-  .rail, .hud-data { display: none; }
+  .rail, .hud-data, .hud #hud-fig { display: none; }
   .menu-toggle { display: block; position: relative; z-index: 2; }
   .top nav { position: fixed; inset: 0; flex-direction: column; justify-content: center; gap: 22px; background: rgb(4 5 10 / .96); font: 400 34px/1 var(--serif); opacity: 0; visibility: hidden; transition: opacity .3s, visibility .3s; }
   .top nav.open { opacity: 1; visibility: visible; }
