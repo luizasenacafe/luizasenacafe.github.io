@@ -1,12 +1,13 @@
-// Portfólio de Luiza Sena: céu, figuras de partículas e efeitos de rolagem.
+// Portfólio de Luiza Sena: céu, figuras de partículas, seleção de fase, efeitos e jogo.
 //
 // Um canvas WebGL fixo (sem bibliotecas) desenha três camadas, de trás para a frente:
 //   1. nebulosa: nuvens de gás e a faixa da Via Láctea, geradas uma vez numa textura;
 //   2. estrelas de fundo: milhares de pontos em profundidades diferentes;
-//   3. a figura: uma nuvem de partículas que assume uma forma da ciência por seção.
-// Por cima, o HTML: o sistema solar que serve de menu, as seções e a estrada.
+//   3. a figura: uma nuvem de partículas que assume uma forma da ciência por fase.
+// Por cima, o HTML: o sistema solar que serve de seleção de fase, as seções e, no fim,
+// um jogo de corrida desenhado num segundo canvas (2D).
 //
-// Quase tudo acompanha um mesmo número, o "índice de seção" (0 na primeira, 1 na
+// Quase tudo acompanha um mesmo número, o "índice de fase" (0 na primeira, 1 na
 // segunda...), calculado a partir da rolagem suavizada. Ele escolhe as duas figuras
 // entre as quais as partículas estão, a cor de destaque e a leitura do rodapé.
 //
@@ -28,26 +29,27 @@
   const TAU = Math.PI * 2;
 
   // Uma entrada por <section class="chapter">, na mesma ordem do HTML.
-  // shape:  figura de partículas.  color: cor de destaque (a do planeta da seção).
+  // shape:  figura de partículas.  color: cor de destaque (a do planeta da fase).
   // color2: segunda cor da nebulosa.  tilt: inclinação (0 de perfil, 1.57 de cima).
   // rip: ondulação animada.  off / y: posição na tela (frações; off só em telas largas).
+  // dim: brilho da figura (menor onde o texto passa por cima dela).
   const CHAPTERS = page === 'welcome'
     ? [{ shape: 'planet', color: [255, 198, 140], color2: [46, 76, 242], tilt: 0.36, rip: 0, scale: 1.0, off: 0.4 }]
     : [
-      { shape: 'star',      color: [255, 176, 72],  color2: [255, 70, 40],   tilt: 0.2,  rip: 0,    scale: 0.26, off: 0, y: 0, ySmall: -0.1 },   // Sol: seleção
-      { shape: 'galaxy',    color: [226, 200, 172], color2: [120, 80, 210],  tilt: 0.95, rip: 0,    scale: 1.0,  off: -0.44 },        // Mercúrio: Sobre
-      { shape: 'well',      color: [255, 206, 112], color2: [210, 70, 50],   tilt: 0.6,  rip: 0.12, scale: 0.98, off: 0 },            // Vênus: Habilidades
-      { shape: 'atom',      color: [96, 190, 255],  color2: [30, 200, 140],  tilt: 0.3,  rip: 0,    scale: 0.95, off: 0.3 },          // Terra: Projetos
-      { shape: 'helix',     color: [255, 112, 72],  color2: [170, 40, 100],  tilt: 0.1,  rip: 0,    scale: 1.0,  off: 0.52 },         // Marte: Experiência
-      { shape: 'lorenz',    color: [255, 170, 110], color2: [90, 60, 220],   tilt: 0.25, rip: 0,    scale: 1.05, off: -0.46 },        // Júpiter: Cursos
-      { shape: 'tesseract', color: [240, 214, 150], color2: [50, 130, 210],  tilt: 0.3,  rip: 0,    scale: 1.0,  off: 0.5 },          // Saturno: Certificados
-      { shape: 'wave',      color: [120, 235, 225], color2: [40, 80, 230],   tilt: 0.5,  rip: 1,    scale: 1.2,  off: 0 },            // Urano: YouTube
-      { shape: 'hole',      color: [255, 84, 196],  color2: [70, 40, 240],   tilt: 0.22, rip: 0,    scale: 0.3,  off: 0, y: 0.1, road: true },   // Estrada: o destino no horizonte
-      { shape: 'hole',      color: [124, 140, 255], color2: [180, 60, 230],  tilt: 0.3,  rip: 0,    scale: 1.0,  off: 0.42 },         // Netuno: Contato
+      { shape: 'star',      color: [255, 176, 72],  color2: [255, 70, 40],   tilt: 0.2,  rip: 0,    scale: 0.26, off: 0, y: 0, ySmall: -0.12 },   // Sol: seleção
+      { shape: 'galaxy',    color: [226, 200, 172], color2: [120, 80, 210],  tilt: 0.95, rip: 0,    scale: 1.0,  off: -0.44 },                    // Mercúrio: Sobre
+      { shape: 'well',      color: [255, 206, 112], color2: [210, 70, 50],   tilt: 0.6,  rip: 0.12, scale: 0.98, off: 0, dim: 0.5 },              // Vênus: Habilidades
+      { shape: 'atom',      color: [96, 190, 255],  color2: [30, 200, 140],  tilt: 0.3,  rip: 0,    scale: 0.95, off: 0.3, dim: 0.7 },            // Terra: Projetos
+      { shape: 'helix',     color: [255, 112, 72],  color2: [170, 40, 100],  tilt: 0.1,  rip: 0,    scale: 1.0,  off: 0.52 },                     // Marte: Experiência
+      { shape: 'lorenz',    color: [255, 170, 110], color2: [90, 60, 220],   tilt: 0.25, rip: 0,    scale: 1.05, off: -0.46 },                    // Júpiter: Cursos
+      { shape: 'tesseract', color: [240, 214, 150], color2: [50, 130, 210],  tilt: 0.3,  rip: 0,    scale: 1.0,  off: 0.5 },                      // Saturno: Certificados
+      { shape: 'wave',      color: [120, 235, 225], color2: [40, 80, 230],   tilt: 0.5,  rip: 1,    scale: 1.2,  off: 0, dim: 0.55 },             // Urano: YouTube
+      { shape: 'hole',      color: [124, 140, 255], color2: [180, 60, 230],  tilt: 0.3,  rip: 0,    scale: 1.0,  off: 0.42 },                     // Netuno: Contato
+      { shape: 'hole',      color: [255, 84, 196],  color2: [70, 40, 240],   tilt: 0.22, rip: 0,    scale: 0.3,  off: 0, y: 0.1, game: true },    // Plutão: o jogo, com o buraco negro no horizonte
     ];
   const chapters = $$('.chapter');
   const LAST = CHAPTERS.length - 1;
-  const ROAD = CHAPTERS.findIndex((c) => c.road);
+  const GAME = CHAPTERS.findIndex((c) => c.game);
 
   // ================================================================== formas
   // Gerador determinístico: o mesmo céu e as mesmas figuras a cada visita.
@@ -240,7 +242,7 @@
   // ================================================================== WebGL
   const canvas = $('#cosmos');
   const small = Math.min(innerWidth, innerHeight) < 700;
-  const COUNT = small ? 10000 : 28000;       // partículas da figura
+  const COUNT = small ? 10000 : 26000;       // partículas da figura
   const STARS = small ? 1600 : 3400;         // estrelas de fundo
   let gl = null;
   const prog = {}, buffers = {};
@@ -275,7 +277,7 @@
       float a = smoothstep(.4, .84, t.r), b = smoothstep(.46, .9, t.g);
       vec3 col = vec3(.012, .014, .03);
       col += uCol * a * a * .27;                                       // gás na cor do planeta
-      col += uCol2 * b * b * .3;                                       // segunda cor da seção
+      col += uCol2 * b * b * .3;                                       // segunda cor da fase
       col += mix(uCol, uCol2, .5) * a * b * .16;                       // onde os dois se cruzam
       col += vec3(.72, .8, 1.) * t.b * .13;                            // brilho difuso da Via Láctea
       vec2 v = vUv - .5;
@@ -339,7 +341,8 @@
       float w = exp(-pow((length(dp) - uPulseT * 1.5) * 7., 2.)) * max(0., 1. - uPulseT);
       s += normalize(dp + 1e-5) / asp * .1 * w;
       gl_Position = vec4(s, 0., 1.);
-      gl_PointSize = uPx * (1.2 + aR.w * aR.w * 3.4) * (2.7 / max(z, .35)) * (1. + uVel * 1.8 + w * 2.5);
+      // o teto no tamanho evita pontos enormes (e caros) quando a câmera atravessa a figura
+      gl_PointSize = min(uPx * 26., uPx * (1.2 + aR.w * aR.w * 3.4) * (2.7 / max(z, .35)) * (1. + uVel * 1.8 + w * 2.5));
       float tw = .62 + .38 * sin(uTime * (1. + aR.y * 2.) + aR.z * 50.);
       vCol = mix(mix(uColA, uColB, m), vec3(1.), aR.z * aR.z * .5);
       vA = tw * (.6 + .6 * smoothstep(4.8, 2.4, z)) * uDim;
@@ -463,7 +466,8 @@
   function resizeGL() {
     vw = innerWidth; vh = innerHeight;
     if (!gl) return;
-    dpr = Math.min(devicePixelRatio || 1, 2);
+    // telas muito grandes não precisam do dobro de pixels: o céu é difuso
+    dpr = Math.min(devicePixelRatio || 1, vw > 1600 ? 1.5 : 2);
     canvas.width = Math.round(vw * dpr);
     canvas.height = Math.round(vh * dpr);
     paintNebula();
@@ -476,10 +480,10 @@
   let scrollSmooth = scrollY, velocity = 0, velSigned = 0, lastVel = 0;
   let introStart = null, lastMs = 0;
   let tops = [];
-  let active = -1, lastAccent = '';
+  let active = -1, lastAccent = '', lastXp = -1, lastReadout = '';
   let col = CHAPTERS[0].color.slice();                // cor de destaque atual (interpolada)
 
-  // Índice contínuo de seção. A passagem acontece numa faixa em torno de cada
+  // Índice contínuo de fase. A passagem acontece numa faixa em torno de cada
   // fronteira, não ao longo da seção inteira.
   function chapterIndex(y) {
     let f = 0;
@@ -488,10 +492,9 @@
     return clamp(f, 0, LAST);
   }
 
-  // ================================================================== leitura e trilho
-  const hudN = $('#hud-n'), hudName = $('#hud-name'), hudFig = $('#hud-fig'), hudData = $('#hud-data');
-  const hudTotal = $('#hud-total');
-  if (hudTotal) hudTotal.textContent = chapters.length;
+  // ================================================================== leitura, trilho e anúncio de fase
+  const hudStage = $('#hud-stage'), hudName = $('#hud-name'), hudFig = $('#hud-fig'), hudData = $('#hud-data'), hudXp = $('#hud-xp');
+  const toast = $('.stage-toast');
   const rail = $('.rail');
   if (rail) chapters.forEach((c) => {
     const a = document.createElement('a');
@@ -502,7 +505,7 @@
   });
   const railLinks = rail ? $$('a', rail) : [];
 
-  // letras embaralhadas que se assentam no nome da seção
+  // letras embaralhadas que se assentam no nome da fase
   let scrambleTimer = 0;
   function scramble(el, text) {
     if (still) { el.textContent = text; return; }
@@ -517,52 +520,107 @@
   }
   function setActive(i) {
     if (i === active || !chapters[i]) return;
+    const first = active === -1;
     active = i;
-    if (hudN) hudN.textContent = i + 1;
-    if (hudName) scramble(hudName, chapters[i].dataset.name);
-    if (hudFig) hudFig.textContent = chapters[i].dataset.fig || '';
+    const data = chapters[i].dataset;
+    if (hudStage) hudStage.textContent = data.stage || '';
+    if (hudName) scramble(hudName, data.name);
+    if (hudFig) hudFig.textContent = data.fig || '';
     railLinks.forEach((a, k) => a.classList.toggle('active', k === i));
+    // anúncio grande no meio da tela, como o início de uma fase (não na chegada à página nem durante uma viagem)
+    if (toast && !first && !still && !travelling) {
+      toast.firstElementChild.textContent = data.stage || '';
+      toast.lastElementChild.textContent = data.name;
+      toast.classList.remove('show');
+      void toast.offsetWidth;
+      toast.classList.add('show');
+    }
   }
 
-  // ================================================================== sistema solar (menu)
+  // ================================================================== sistema solar (seleção de fase)
   const system = $('.system');
   const orbitsSvg = $('.orbits');
   // f: raio da órbita (fração do maior).  a: ângulo inicial.  w: velocidade angular,
   // que cai com o raio como manda a terceira lei de Kepler (T² ∝ a³, logo ω ∝ a^-1,5).
   const planets = $$('.planet').map((el, i, all) => {
-    const f = 0.37 + 0.63 * Math.pow(i / Math.max(1, all.length - 1), 0.9);
+    const f = 0.34 + 0.66 * Math.pow(i / Math.max(1, all.length - 1), 0.9);
     return { el, f, a: 0.6 + i * 2.4, w: 0.07 * Math.pow(f, -1.5) };
   });
-  let orbitTime = 0, orbitPaused = false, RX = 0, RY = 0;
+  // spin: giro dado pelo arrasto (com inércia).  tiltK: achatamento das órbitas (arrasto vertical).
+  let orbitTime = 0, orbitPaused = false, RX = 0, RY = 0, spin = 0, spinVel = 0, tiltK = 1, drawnTilt = 0;
+  let drag = null, dragged = false;
   function layoutSystem() {
     if (!system) return;
     const W = system.clientWidth, H = system.clientHeight;
     const landscape = W > H * 0.9;
-    RX = landscape ? Math.min(W * 0.46, 680) : W * 0.37;
-    RY = landscape ? Math.min(RX * 0.5, H * 0.36) : Math.min(H * 0.29, RX * 1.9);
+    RX = landscape ? Math.min(W * 0.47, 720) : W * 0.38;
+    RY = landscape ? Math.min(RX * 0.5, H * 0.37) : Math.min(H * 0.3, RX * 1.9);
     orbitsSvg.setAttribute('viewBox', `0 0 ${W} ${H}`);
-    orbitsSvg.innerHTML = planets.map((p) => `<ellipse cx="${W / 2}" cy="${H / 2}" rx="${(RX * p.f).toFixed(1)}" ry="${(RY * p.f).toFixed(1)}"/>`).join('');
+    orbitsSvg.innerHTML = planets.map(() => `<ellipse cx="${W / 2}" cy="${H / 2}"/>`).join('');
+    drawnTilt = 0;
   }
   function updateSystem(dt) {
-    if (!orbitPaused && !still) orbitTime += dt;
+    if (!orbitPaused && !still && !drag) orbitTime += dt;
+    if (!drag) { spin += spinVel; spinVel *= 0.94; }
+    if (Math.abs(tiltK - drawnTilt) > 0.002) {       // só redesenha as órbitas quando o achatamento muda
+      drawnTilt = tiltK;
+      $$('ellipse', orbitsSvg).forEach((el, i) => {
+        el.setAttribute('rx', (RX * planets[i].f).toFixed(1));
+        el.setAttribute('ry', (RY * tiltK * planets[i].f).toFixed(1));
+      });
+    }
     for (const p of planets) {
-      const th = p.a + orbitTime * p.w, depth = Math.sin(th);
-      p.el.style.transform = `translate(-50%,-50%) translate3d(${(Math.cos(th) * RX * p.f).toFixed(1)}px,${(depth * RY * p.f).toFixed(1)}px,0) scale(${(0.86 + 0.14 * depth).toFixed(3)})`;
+      const th = p.a + orbitTime * p.w + spin, depth = Math.sin(th);
+      p.el.style.transform = `translate(-50%,-50%) translate3d(${(Math.cos(th) * RX * p.f).toFixed(1)}px,${(depth * RY * tiltK * p.f).toFixed(1)}px,0) scale(${(0.84 + 0.16 * depth).toFixed(3)})`;
       p.el.style.zIndex = depth > 0 ? 3 : 1;
     }
   }
   planets.forEach((p) => {
     for (const on of ['pointerenter', 'focus']) p.el.addEventListener(on, () => { orbitPaused = true; });
     for (const off of ['pointerleave', 'blur']) p.el.addEventListener(off, () => { orbitPaused = false; });
+    p.el.addEventListener('dragstart', (e) => e.preventDefault());
   });
+  // arrastar gira o sistema (horizontal) e inclina o plano das órbitas (vertical)
+  if (system) {
+    system.addEventListener('pointerdown', (e) => {
+      if (e.button) return;
+      drag = { x: e.clientX, y: e.clientY, id: e.pointerId };
+      dragged = false;
+      spinVel = 0;
+    });
+    addEventListener('pointermove', (e) => {
+      if (!drag || e.pointerId !== drag.id) return;
+      const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
+      if (!dragged) {
+        if (Math.hypot(dx, dy) < 6) return;          // abaixo disso ainda é um clique
+        dragged = true;
+        system.classList.add('dragging');
+        try { system.setPointerCapture(drag.id); } catch { /* sem captura, o arrasto segue pelo window */ }
+      }
+      spinVel = -dx * 0.006;
+      spin += spinVel;
+      tiltK = clamp(tiltK + dy * 0.004, 0.2, 1.4);
+      drag.x = e.clientX; drag.y = e.clientY;
+    });
+    const release = () => { drag = null; system.classList.remove('dragging'); };
+    addEventListener('pointerup', release);
+    addEventListener('pointercancel', release);
+    // o clique que encerra um arrasto não deve abrir o planeta que estava por baixo
+    system.addEventListener('click', (e) => {
+      if (!dragged) return;
+      dragged = false;
+      e.preventDefault();
+      e.stopPropagation();
+    }, true);
+  }
 
-  // emblema de cada seção: uma cópia do planeta que a representa no menu
+  // emblema de cada fase: uma cópia do planeta que a representa na seleção
   $$('.emblem').forEach((el) => {
     const source = $(`.planet[data-planet="${el.dataset.planet}"] .orb`);
     el.innerHTML = source ? source.outerHTML : '<span class="orb"><i class="ball"></i></span>';
   });
 
-  // viagem até uma seção: um círculo na cor do planeta cobre a tela, a página salta e ele se dissolve
+  // viagem até uma fase: um círculo na cor do planeta cobre a tela, a página salta e ele se dissolve
   const wipe = $('.wipe');
   let travelling = false;
   function travel(index, x, y) {
@@ -581,10 +639,12 @@
     wipe.style.setProperty('--x', x + 'px');
     wipe.style.setProperty('--y', y + 'px');
     wipe.style.setProperty('--wipe', `rgb(${CHAPTERS[index].color.join(' ')})`);
+    $('b', wipe).textContent = target.dataset.stage || '';
+    $('span', wipe).textContent = target.dataset.name;
     wipe.classList.remove('out');
     wipe.classList.add('in');
-    setTimeout(() => { land(); wipe.classList.add('out'); wipe.classList.remove('in'); }, 640);
-    setTimeout(() => { wipe.classList.remove('out'); travelling = false; }, 1400);
+    setTimeout(() => { land(); wipe.classList.add('out'); wipe.classList.remove('in'); }, 760);
+    setTimeout(() => { wipe.classList.remove('out'); travelling = false; }, 1500);
   }
   document.addEventListener('click', (e) => {
     const a = e.target.closest && e.target.closest('a[href^="#"]');
@@ -614,7 +674,7 @@
 
   // Blocos que entram (.fx, .head) e fórmulas (.fm): as posições são medidas uma vez,
   // sem os efeitos aplicados, e a cada quadro só se faz conta com a rolagem.
-  let fxItems = [], fmItems = [], fmFixed = [];
+  let fxItems = [], fmItems = [], fmFixed = [], lineBox = { top: 0, h: 1 };
   function measureFx() {
     root.classList.add('measuring');
     fxItems = $$('.fx, .head').filter((el) => !el.closest('.hscroll-track')).map((el) => ({ el, top: el.getBoundingClientRect().top + scrollY, last: -1 }));
@@ -623,17 +683,19 @@
       return { el, mid: r.top + scrollY + r.height / 2, s: parseFloat(el.dataset.s || '0.2'), shown: true };
     });
     fmFixed = $$('.fm[data-h]').map((el) => ({ el, s: parseFloat(el.dataset.s || '0.2') }));
+    for (const b of wordBlocks) { const r = b.el.getBoundingClientRect(); b.top = r.top + scrollY; b.h = r.height; }
+    if (timeline) { const r = timeline.getBoundingClientRect(); lineBox = { top: r.top + scrollY, h: r.height }; }
     root.classList.remove('measuring');
   }
 
   const timeline = $('.timeline');
   const timelineItems = timeline ? $$('li', timeline) : [];
   const hub = $('.hub');
-  const tickers = $$('.ticker-track').map((el) => ({ el, dir: parseFloat(el.dataset.dir || '1'), half: 0 }));
+  const tickers = $$('.ticker-track').map((el) => ({ el, dir: parseFloat(el.dataset.dir || '1'), half: 0, top: 0 }));
 
   // projetos: rolagem vertical convertida em movimento lateral
   const hscroll = $('.hscroll'), track = $('.hscroll-track');
-  let hsDistance = 0, hsX = 0, panels = [];
+  let hsDistance = 0, hsX = 0, hsTop = 0, hsH = 0, panels = [];
   function sizeHScroll() {
     if (!hscroll) return;
     const pin = !still && innerWidth > 760 && innerHeight > 640;
@@ -653,6 +715,7 @@
   // onda do YouTube
   const waveA = $('#wave-a'), waveB = $('#wave-b');
   const waveBox = waveA ? waveA.closest('.wave') : null;
+  let waveTop = 0;
   function drawWave(time, phase, amp) {
     let a = '', b = '';
     for (let i = 0; i <= 80; i++) {
@@ -671,21 +734,27 @@
     layoutSystem();
     tops = chapters.map((c) => c.getBoundingClientRect().top + scrollY);
     measureFx();
-    tickers.forEach((t) => { t.half = t.el.scrollWidth / 2; });
-    sizeRoad();
+    tickers.forEach((t) => { t.half = t.el.scrollWidth / 2; t.top = t.el.getBoundingClientRect().top + scrollY; });
+    if (hscroll) { hsTop = hscroll.getBoundingClientRect().top + scrollY; hsH = hscroll.offsetHeight; }
+    if (waveBox) waveTop = waveBox.getBoundingClientRect().top + scrollY;
+    sizeGame();
   }
 
+  const near = (top, margin = 1.2) => Math.abs(scrollSmooth + vh / 2 - top) < vh * margin;
+
   function scrollEffects(time) {
-    root.style.setProperty('--prog', clamp(scrollY / Math.max(1, root.scrollHeight - vh)).toFixed(4));
+    const xp = clamp(scrollY / Math.max(1, root.scrollHeight - vh));
+    root.style.setProperty('--prog', xp.toFixed(4));
+    const xpInt = Math.round(xp * 100);
+    if (hudXp && xpInt !== lastXp) { lastXp = xpInt; hudXp.textContent = 'XP ' + String(xpInt).padStart(3, '0') + '%'; }
 
     // velocidade com sinal: inclina os blocos e separa as cores dos títulos
-    const v = Math.abs(velSigned) < 0.01 ? 0 : Math.round(clamp(velSigned, -1, 1) * 100) / 100;
+    const v = Math.abs(velSigned) < 0.01 ? 0 : Math.round(clamp(velSigned, -1, 1) * 50) / 50;
     if (v !== lastVel) { lastVel = v; root.style.setProperty('--vel', v); }
 
     // seleção: a câmera mergulha no sistema solar conforme se rola
-    if (hub) {
-      const hp = clamp(scrollSmooth / (vh * 0.62));
-      hub.style.setProperty('--hp', hp.toFixed(4));
+    if (hub && scrollSmooth < vh * 1.3) {
+      hub.style.setProperty('--hp', clamp(scrollSmooth / (vh * 0.62)).toFixed(4));
       hub.style.setProperty('--mx', mouse.x.toFixed(3));
       hub.style.setProperty('--my', mouse.y.toFixed(3));
     }
@@ -703,29 +772,29 @@
       it.el.style.transform = still ? '' : `translate3d(${(mouse.x * it.s * 60).toFixed(1)}px,${(d * it.s).toFixed(1)}px,0) rotate(${(d * it.s * 0.012).toFixed(2)}deg)`;
       it.el.style.opacity = (clamp(1 - Math.abs(d) / (vh * 0.9)) * 0.55).toFixed(3);
     }
-    for (const it of fmFixed) it.el.style.transform = still ? '' : `translate3d(${(hsX * it.s + mouse.x * it.s * 70).toFixed(1)}px,${(-mouse.y * it.s * 50).toFixed(1)}px,0)`;
+    if (!still && (scrollSmooth < vh * 1.3 || (hscroll && near(hsTop + hsH / 2, 0.5 + hsH / vh / 2)))) {
+      for (const it of fmFixed) it.el.style.transform = `translate3d(${(hsX * it.s + mouse.x * it.s * 70).toFixed(1)}px,${(-mouse.y * it.s * 50).toFixed(1)}px,0)`;
+    }
 
-    for (const t of tickers) if (t.half) t.el.style.transform = `translate3d(${(-(((scrollSmooth * 0.7 * t.dir) % t.half) + t.half) % t.half).toFixed(1)}px,0,0)`;
+    for (const t of tickers) if (t.half && near(t.top)) t.el.style.transform = `translate3d(${(-(((scrollSmooth * 0.7 * t.dir) % t.half) + t.half) % t.half).toFixed(1)}px,0,0)`;
 
     for (const block of wordBlocks) {
-      const r = block.el.getBoundingClientRect();
-      const p = clamp((vh * 0.88 - r.top) / (vh * 0.5 + r.height));
+      const p = clamp((vh * 0.88 - (block.top - scrollSmooth)) / (vh * 0.5 + block.h));
       const n = Math.round(p * block.spans.length);
       if (n !== block.shown) { block.shown = n; block.spans.forEach((s, i) => s.classList.toggle('on', i < n)); }
     }
 
     if (timeline) {
-      const r = timeline.getBoundingClientRect();
-      if (r.bottom > -vh && r.top < vh * 2) {
-        const p = clamp((vh * 0.62 - r.top) / r.height);
+      const top = lineBox.top - scrollSmooth;
+      if (top + lineBox.h > -vh && top < vh * 2) {
+        const p = clamp((vh * 0.62 - top) / lineBox.h);
         timeline.style.setProperty('--tp', p.toFixed(4));
-        const lineY = r.top + r.height * p;
-        timelineItems.forEach((li, i) => li.classList.toggle('lit', r.top + (r.height * i) / timelineItems.length <= lineY - 10));
+        timelineItems.forEach((li, i) => li.classList.toggle('lit', i / timelineItems.length <= p - 0.02));
       }
     }
 
-    if (hsDistance > 0) {
-      const p = clamp(-hscroll.getBoundingClientRect().top / hsDistance);
+    if (hsDistance > 0 && near(hsTop + hsH / 2, 0.6 + hsH / vh / 2)) {
+      const p = clamp((scrollY - hsTop) / hsDistance);
       hsX = lerp(hsX, -p * hsDistance, 0.16);
       track.style.transform = `translate3d(${hsX.toFixed(1)}px,0,0)`;
       // cada painel gira conforme a distância do centro da tela
@@ -736,154 +805,291 @@
       }
     }
 
-    if (waveBox) {
-      const r = waveBox.getBoundingClientRect();
-      if (r.bottom > 0 && r.top < vh) drawWave(time, scrollSmooth * 0.012, 16 + velocity * 34);
-    }
+    if (waveBox && near(waveTop, 0.7)) drawWave(time, scrollSmooth * 0.012, 16 + velocity * 34);
   }
 
-  // ================================================================== estrada
-  // Uma estrada em perspectiva num canvas 2D transparente (o céu aparece atrás).
-  // rp vai de 0 a 1 ao longo da seção; a velocidade do carro cresce com ele.
-  const road = $('.road'), roadCanvas = $('#road-canvas');
-  const rctx = roadCanvas ? roadCanvas.getContext('2d') : null;
+  // ================================================================== jogo
+  // Corrida de três faixas num canvas 2D transparente (o céu aparece atrás).
+  // Tudo é desenhado em perspectiva a partir de coordenadas de mundo (x lateral,
+  // y altura, z distância). Para ficar leve: resolução limitada, sem sombras do
+  // canvas, traços agrupados num único caminho e placas pré-desenhadas.
+  const game = $('.game'), gameStage = $('.game-stage'), gameCanvas = $('#game-canvas');
+  const gctx = gameCanvas ? gameCanvas.getContext('2d', { desynchronized: true }) : null;
   const car = $('.car');
-  const rd = { v: $('#rd-v'), u: $('#rd-u'), g: $('#rd-g'), d: $('#rd-d'), bar: $('#rd-bar') };
-  const C_KMH = 1079252848.8, TRIP_KM = 384400;       // velocidade da luz; a viagem tem a distância Terra–Lua
+  const gui = { score: $('#g-score'), best: $('#g-best'), speed: $('#g-speed'), title: $('#g-title'), text: $('#g-text'), start: $('#g-start') };
+  const ROAD_W = 1.8, LANE = 1.2, Z_NEAR = 1.55, Z_CAR = 2.35, Z_FAR = 150, MAX_SPEED = 2.6;
   const SIGNS = ['v = v₀ + at', 'Δs = v₀t + ½at²', 'F = ma', 'E = ½mv²', 'p = γmv', 'E = γmc²', 'γ = 1/√(1 − v²/c²)', "t' = γt", "L' = L/γ"];
-  const streaks = Array.from({ length: 90 }, () => ({ a: Math.random() * TAU, r: Math.random(), s: 0.4 + Math.random() }));
-  let roadTop = 0, roadHeight = 1, roadDist = 0, rp = 0, carX = 0, roadDpr = 1;
+  const BEST_KEY = 'luiza-portfolio-recorde';
   const nf = new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 0 });
+  const streaks = Array.from({ length: 70 }, () => ({ a: Math.random() * TAU, r: Math.random(), s: 0.4 + Math.random() }));
+  const G = {
+    state: 'idle',           // idle (vitrine) | playing | over
+    t: 0, speed: 0, dist: 0, bonus: 0, best: 0,
+    carX: 0, targetX: 0,     // posição lateral do carro e para onde ele vai (mundo)
+    ents: [], nextRow: 0,    // obstáculos e cristais; distância em que nasce a próxima fileira
+    W: 0, H: 0, k: 1, top: 0, f: 1, cam: 1, y0: 0, x0: 0, hudTick: 0, surface: null, sprites: [],
+  };
+  try { G.best = parseInt(localStorage.getItem(BEST_KEY) || '0', 10) || 0; } catch { /* sem armazenamento: o recorde vale só nesta visita */ }
+  if (gui.best) gui.best.textContent = nf.format(G.best);
 
-  function sizeRoad() {
-    if (!road) return;
-    roadTop = road.getBoundingClientRect().top + scrollY;
-    roadHeight = road.offsetHeight;
-    roadDpr = Math.min(devicePixelRatio || 1, 1.5);
-    roadCanvas.width = Math.round(roadCanvas.clientWidth * roadDpr);
-    roadCanvas.height = Math.round(roadCanvas.clientHeight * roadDpr);
+  function sizeGame() {
+    if (!game) return;
+    G.top = game.getBoundingClientRect().top + scrollY;
+    const cw = gameCanvas.clientWidth, ch = gameCanvas.clientHeight;
+    G.k = Math.min(devicePixelRatio || 1, cw > 1100 ? 1 : 1.5);          // pixels do canvas por pixel de tela
+    G.W = gameCanvas.width = Math.round(cw * G.k);
+    G.H = gameCanvas.height = Math.round(ch * G.k);
+    G.y0 = G.H * 0.46; G.x0 = G.W / 2;
+    // f: pixels por unidade de mundo a um de distância. Em telas em pé ele é limitado pela
+    // largura (para as três faixas caberem) e a câmera sobe (cam) para o carro ficar embaixo.
+    G.f = Math.min(G.H * 0.9, G.W * 0.64);
+    G.cam = Math.max(1, (0.41 * G.H * Z_CAR) / G.f);
+    G.surface = gctx.createLinearGradient(0, G.y0, 0, G.H);
+    G.surface.addColorStop(0, 'rgba(6,6,14,0)');
+    G.surface.addColorStop(0.2, 'rgba(6,6,14,.84)');
+    G.surface.addColorStop(1, 'rgba(12,12,24,.95)');
+    // o carro (SVG) ocupa 0,9 de faixa e pousa na pista na distância Z_CAR
+    const w = (0.9 * G.f) / Z_CAR / G.k;
+    car.style.width = w.toFixed(1) + 'px';
+    car.style.marginLeft = (-w / 2).toFixed(1) + 'px';
+    car.style.top = ((G.y0 + (G.cam * G.f) / Z_CAR) / G.k - (w / 2) * 0.89).toFixed(1) + 'px';
+    // placas: cada fórmula é desenhada uma vez numa imagem e depois só redimensionada
+    if (!G.sprites.length) G.sprites = SIGNS.map((text) => {
+      const c = document.createElement('canvas'), x = c.getContext('2d');
+      x.font = "italic 46px Georgia, 'Times New Roman', serif";
+      c.width = Math.ceil(x.measureText(text).width + 60); c.height = 88;
+      x.fillStyle = 'rgba(6,7,16,.88)'; x.fillRect(0, 0, c.width, c.height);
+      x.strokeStyle = '#fff'; x.lineWidth = 3; x.strokeRect(1.5, 1.5, c.width - 3, c.height - 3);
+      x.font = "italic 46px Georgia, 'Times New Roman', serif";
+      x.fillStyle = '#fff'; x.textAlign = 'center'; x.textBaseline = 'middle';
+      x.fillText(text, c.width / 2, c.height / 2 + 2);
+      return c;
+    });
   }
 
-  function updateRoad(dt, time) {
-    if (!road) return;
-    rp = clamp((scrollSmooth - roadTop) / Math.max(1, roadHeight - vh));
-    if (scrollSmooth < roadTop - vh || scrollSmooth > roadTop + roadHeight) return;   // fora da tela
+  function startGame() {
+    Object.assign(G, { state: 'playing', t: 0, dist: 0, bonus: 0, ents: [], nextRow: 60, speed: 0.8 });
+    gui.score.textContent = '0';
+    game.classList.add('playing');
+    game.classList.remove('hit', 'got');
+    gui.start.blur();
+  }
+  function endGame() {
+    const score = Math.floor(G.dist / 3) + G.bonus;
+    const record = score > G.best;
+    if (record) { G.best = score; try { localStorage.setItem(BEST_KEY, String(score)); } catch { /* idem */ } }
+    G.state = 'over';
+    game.classList.remove('playing', 'got');
+    game.classList.add('hit');
+    gui.title.textContent = record ? 'Novo recorde' : 'Fim de jogo';
+    gui.text.textContent = `Você fez ${nf.format(score)} pontos. Recorde: ${nf.format(G.best)}.`;
+    gui.start.textContent = 'Jogar de novo';
+    gui.best.textContent = nf.format(G.best);
+    gui.score.textContent = nf.format(score);
+    // onda de choque nas partículas, a partir do carro
+    pulse.x = (G.carX * G.f) / Z_CAR / (G.W / 2);
+    pulse.y = -0.75;
+    pulse.t0 = performance.now();
+  }
+  function spawnRow() {
+    const lanes = [-1, 0, 1];
+    const blocked = Math.random() < clamp(0.2 + G.t / 90, 0, 0.62) ? 2 : 1;
+    for (let i = 0; i < blocked; i++) {
+      const lane = lanes.splice(Math.floor(Math.random() * lanes.length), 1)[0];
+      G.ents.push({ z: Z_FAR, lane, type: Math.random() < 0.5 ? 'wall' : 'rock', spin: Math.random() * TAU });
+    }
+    // um cristal numa faixa livre, a meio caminho da próxima fileira
+    if (Math.random() < 0.45) G.ents.push({ z: Z_FAR + 13, lane: lanes[Math.floor(Math.random() * lanes.length)], type: 'gem', spin: 0 });
+  }
 
-    // o carro anda sozinho na velocidade atual; rolar é o acelerador
-    const speed = still ? 0 : 0.1 + rp * rp * 2.5;
-    roadDist += speed * dt * 60;
+  if (game) {
+    gui.start.addEventListener('click', startGame);
+    game.addEventListener('animationend', (e) => { if (e.target === gameStage) game.classList.remove('hit'); });
+    // mouse e toque: o carro vai para onde o ponteiro está
+    const aim = (e) => {
+      const r = gameStage.getBoundingClientRect();
+      G.targetX = clamp(((e.clientX - r.left - r.width / 2) * G.k * Z_CAR) / G.f, -LANE, LANE);
+    };
+    gameStage.addEventListener('pointermove', aim, { passive: true });
+    gameStage.addEventListener('pointerdown', aim, { passive: true });
+    // teclado: uma faixa por toque
+    addEventListener('keydown', (e) => {
+      if (G.state !== 'playing') return;
+      const dir = e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A' ? -1 : e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D' ? 1 : 0;
+      if (!dir) return;
+      e.preventDefault();
+      G.targetX = clamp((Math.round(G.targetX / LANE) + dir) * LANE, -LANE, LANE);
+    });
+  }
 
-    const W = roadCanvas.width, H = roadCanvas.height, ctx = rctx;
-    const y0 = H * 0.46, x0 = W / 2 - mouse.x * W * 0.035, f = H * 0.9;
-    const RW = 1.7, zN = 1.55, zF = 150;
-    const P = (x, y, z) => [x0 + (x * f) / z, y0 + ((1 - y) * f) / z];
+  function updateGame(dt, time) {
+    if (!game || scrollSmooth < G.top - vh || scrollSmooth > G.top + vh) return;      // fora da tela: nada roda
+
+    // --- simulação
+    if (G.state === 'playing') { G.t += dt; G.speed = Math.min(MAX_SPEED, 0.8 + G.t * 0.045); }
+    else G.speed = lerp(G.speed, G.state === 'idle' && !still ? 0.35 : 0, 0.05);
+    const step = G.speed * dt * 60;
+    G.dist += step;
+    G.carX = lerp(G.carX, G.targetX, 0.2);
+    if (G.state === 'playing') {
+      while (G.dist >= G.nextRow) { spawnRow(); G.nextRow += lerp(36, 23, clamp(G.t / 70)); }
+      for (const e of G.ents) {
+        e.z -= step;
+        if (e.hit || e.z > Z_CAR + 0.7 || e.z < Z_CAR - 0.8) continue;
+        if (Math.abs(e.lane * LANE - G.carX) > (e.type === 'gem' ? 0.7 : 0.8)) continue;
+        if (e.type === 'gem') {
+          e.hit = true; G.bonus += 50;
+          game.classList.remove('got'); void game.offsetWidth; game.classList.add('got');
+        } else { endGame(); break; }
+      }
+      G.ents = G.ents.filter((e) => e.z > Z_CAR - 0.4 && !e.hit);
+    } else if (G.state === 'over') {
+      for (const e of G.ents) e.z -= step;
+      G.ents = G.ents.filter((e) => e.z > Z_CAR - 0.4);      // o que já passou do carro some
+    }
+
+    // --- desenho
+    const ctx = gctx, { W, H, f, y0, cam } = G;
+    const x0 = G.x0 - mouse.x * W * 0.02;
+    const P = (x, y, z) => [x0 + (x * f) / z, y0 + ((cam - y) * f) / z];
     const rgb = col.join(',');
-    const quad = (pts) => { ctx.beginPath(); pts.forEach((p, i) => (i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1]))); ctx.closePath(); ctx.fill(); };
-    const line = (a, b) => { ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke(); };
+    const speedN = G.speed / MAX_SPEED;
     ctx.clearRect(0, 0, W, H);
 
-    // brilho no horizonte, onde está o destino
-    let g = ctx.createRadialGradient(x0, y0, 0, x0, y0, H * 0.55);
-    g.addColorStop(0, `rgba(${rgb},${0.22 + rp * 0.4})`);
-    g.addColorStop(1, 'rgba(0,0,0,0)');
-    ctx.fillStyle = g;
-    ctx.fillRect(0, 0, W, H);
-
-    // riscos de velocidade saindo do ponto de fuga
-    if (rp > 0.2 && !still) {
-      const k = (rp - 0.2) / 0.8, R = Math.hypot(W, H) * 0.6;
-      ctx.lineWidth = Math.max(1, W / 900);
+    // riscos de velocidade saindo do ponto de fuga (um único caminho)
+    if (speedN > 0.3) {
+      const k = (speedN - 0.3) / 0.7, R = Math.hypot(W, H) * 0.6;
+      ctx.beginPath();
       for (const s of streaks) {
         s.r += s.s * k * k * dt * 1.6;
         if (s.r > 1) { s.r = 0.02; s.a = Math.random() * TAU; }
-        const r1 = s.r * R, r2 = r1 + (20 + k * k * 240) * s.r * roadDpr;
-        ctx.strokeStyle = `rgba(255,255,255,${(k * 0.75 * s.r).toFixed(3)})`;
-        line([x0 + Math.cos(s.a) * r1, y0 + Math.sin(s.a) * r1], [x0 + Math.cos(s.a) * r2, y0 + Math.sin(s.a) * r2]);
+        const r1 = s.r * R, r2 = r1 + (20 + k * k * 220) * s.r * G.k, c = Math.cos(s.a), sn = Math.sin(s.a);
+        ctx.moveTo(x0 + c * r1, y0 + sn * r1);
+        ctx.lineTo(x0 + c * r2, y0 + sn * r2);
       }
+      ctx.strokeStyle = `rgba(255,255,255,${(k * 0.4).toFixed(3)})`;
+      ctx.lineWidth = 1;
+      ctx.stroke();
     }
 
     // pista
-    g = ctx.createLinearGradient(0, y0, 0, H);
-    g.addColorStop(0, 'rgba(6,6,14,0)');
-    g.addColorStop(0.2, 'rgba(6,6,14,.84)');
-    g.addColorStop(1, 'rgba(12,12,24,.95)');
-    ctx.fillStyle = g;
-    quad([P(-RW, 0, zN), P(RW, 0, zN), P(RW, 0, zF), P(-RW, 0, zF)]);
+    const nL = P(-ROAD_W, 0, Z_NEAR), nR = P(ROAD_W, 0, Z_NEAR), fL = P(-ROAD_W, 0, Z_FAR), fR = P(ROAD_W, 0, Z_FAR);
+    ctx.fillStyle = G.surface;
+    ctx.beginPath(); ctx.moveTo(nL[0], nL[1]); ctx.lineTo(nR[0], nR[1]); ctx.lineTo(fR[0], fR[1]); ctx.lineTo(fL[0], fL[1]); ctx.fill();
 
-    // travessas e tracejado: é o que dá a sensação de velocidade
+    // travessas: dão a sensação de velocidade
+    ctx.beginPath();
+    for (let z = 3 - (G.dist % 3); z < 66; z += 3) {
+      if (z < Z_NEAR) continue;
+      const a = P(-ROAD_W, 0, z), b = P(ROAD_W, 0, z);
+      ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]);
+    }
     ctx.strokeStyle = `rgba(${rgb},.2)`;
     ctx.lineWidth = 1;
-    for (let z = 3 - (roadDist % 3); z < 70; z += 3) if (z > zN) line(P(-RW, 0, z), P(RW, 0, z));
-    ctx.fillStyle = 'rgba(255,255,255,.88)';
-    for (const x of [-RW / 3, RW / 3]) {
-      for (let z = 6 - (roadDist % 6) - 6; z < 120; z += 6) {
-        const z1 = Math.max(z, zN), z2 = z + 2.6;
-        if (z2 > zN) quad([P(x - 0.035, 0, z1), P(x + 0.035, 0, z1), P(x + 0.035, 0, z2), P(x - 0.035, 0, z2)]);
+    ctx.stroke();
+
+    // tracejado entre as três faixas
+    ctx.beginPath();
+    for (const x of [-LANE / 2, LANE / 2]) {
+      for (let z = -(G.dist % 6); z < 110; z += 6) {
+        const z1 = Math.max(z, Z_NEAR), z2 = z + 2.6;
+        if (z2 <= Z_NEAR) continue;
+        const a = P(x - 0.035, 0, z1), b = P(x + 0.035, 0, z1), c = P(x + 0.035, 0, z2), d = P(x - 0.035, 0, z2);
+        ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.lineTo(c[0], c[1]); ctx.lineTo(d[0], d[1]); ctx.closePath();
       }
     }
+    ctx.fillStyle = 'rgba(255,255,255,.85)';
+    ctx.fill();
 
-    // bordas iluminadas
-    ctx.strokeStyle = `rgb(${rgb})`;
-    ctx.lineWidth = Math.max(2, W / 520);
-    ctx.shadowColor = `rgb(${rgb})`;
-    ctx.shadowBlur = 20 * roadDpr;
-    line(P(-RW, 0, zN), P(-RW, 0, zF));
-    line(P(RW, 0, zN), P(RW, 0, zF));
-    ctx.shadowBlur = 0;
+    // bordas: um traço largo e fraco por baixo de um fino e forte faz o papel do brilho
+    ctx.beginPath();
+    ctx.moveTo(nL[0], nL[1]); ctx.lineTo(fL[0], fL[1]);
+    ctx.moveTo(nR[0], nR[1]); ctx.lineTo(fR[0], fR[1]);
+    ctx.strokeStyle = `rgba(${rgb},.22)`; ctx.lineWidth = 9 * G.k; ctx.stroke();
+    ctx.strokeStyle = `rgb(${rgb})`; ctx.lineWidth = 2 * G.k; ctx.stroke();
 
     // postes de luz
-    for (let z = 12 - (roadDist % 12) + 108; z > zN; z -= 12) {
-      const alpha = clamp(1.25 - z / 100);
+    ctx.beginPath();
+    for (let z = 12 - (G.dist % 12); z < 100; z += 12) {
+      if (z < Z_NEAR) continue;
       for (const side of [-1, 1]) {
-        const base = P(side * (RW + 0.4), 0, z), top = P(side * (RW + 0.4), 0.6, z);
-        ctx.strokeStyle = `rgba(${rgb},${(alpha * 0.8).toFixed(3)})`;
-        ctx.lineWidth = Math.max(1, (0.035 * f) / z);
-        line(base, top);
-        ctx.fillStyle = `rgba(255,255,255,${alpha.toFixed(3)})`;
-        ctx.beginPath(); ctx.arc(top[0], top[1], Math.max(1, (0.05 * f) / z), 0, TAU); ctx.fill();
+        const a = P(side * (ROAD_W + 0.4), 0, z), b = P(side * (ROAD_W + 0.4), 0.6, z);
+        ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]);
+        ctx.rect(b[0] - 1.5 * G.k, b[1] - 1.5 * G.k, 3 * G.k, 3 * G.k);
+      }
+    }
+    ctx.strokeStyle = `rgba(${rgb},.75)`; ctx.lineWidth = 1.5 * G.k; ctx.stroke();
+
+    // placas com as fórmulas do movimento, de um lado e do outro
+    const SPACING = 80;
+    for (let n = Math.ceil((G.dist + 130) / SPACING); n * SPACING - G.dist > Z_NEAR + 0.4; n--) {
+      const z = n * SPACING - G.dist, side = n % 2 ? 1 : -1, h = (0.62 * f) / z;
+      if (h < 9) continue;
+      const img = G.sprites[((n % SIGNS.length) + SIGNS.length) % SIGNS.length], w = (h * img.width) / img.height;
+      const foot = P(side * (ROAD_W + 1.3), 0, z), head = P(side * (ROAD_W + 1.3), 1.05, z);
+      ctx.globalAlpha = clamp(1.3 - z / 110);
+      ctx.beginPath(); ctx.moveTo(foot[0], foot[1]); ctx.lineTo(head[0], head[1]);
+      ctx.strokeStyle = `rgb(${rgb})`; ctx.lineWidth = Math.max(1, h * 0.05); ctx.stroke();
+      ctx.drawImage(img, head[0] - w / 2, head[1] - h, w, h);
+    }
+    ctx.globalAlpha = 1;
+
+    // obstáculos e cristais, do mais distante ao mais próximo
+    for (let i = G.ents.length - 1; i >= 0; i--) {
+      const e = G.ents[i];
+      if (e.z > Z_FAR || e.z < Z_CAR - 0.4) continue;
+      const x = e.lane * LANE, s = f / e.z;                      // s: pixels por unidade de mundo nessa distância
+      const [cx, gy] = P(x, 0, e.z);
+      ctx.globalAlpha = clamp(1.6 - e.z / 95);
+      if (e.type === 'wall') {                                    // barreira: bloco escuro com faixa de alerta
+        const w = 1.02 * s, h = 0.78 * s;
+        ctx.fillStyle = '#0a0b16'; ctx.fillRect(cx - w / 2, gy - h, w, h);
+        ctx.strokeStyle = '#ff3355'; ctx.lineWidth = Math.max(1, 0.05 * s); ctx.strokeRect(cx - w / 2, gy - h, w, h);
+        ctx.fillStyle = '#ff3355'; ctx.fillRect(cx - w / 2, gy - h * 0.62, w, h * 0.2);
+        ctx.fillStyle = '#fff'; ctx.fillRect(cx - w * 0.06, gy - h * 0.62, w * 0.12, h * 0.2);
+      } else if (e.type === 'rock') {                             // asteroide: polígono irregular
+        const r = 0.46 * s;
+        ctx.beginPath();
+        for (let j = 0; j < 8; j++) {
+          const a = (j / 8) * TAU + e.spin, rr = r * (0.78 + 0.22 * Math.sin(j * 2.7 + e.spin * 3));
+          ctx.lineTo(cx + Math.cos(a) * rr, gy - r + Math.sin(a) * rr);
+        }
+        ctx.closePath();
+        ctx.fillStyle = '#3a3542'; ctx.fill();
+        ctx.strokeStyle = '#ff3355'; ctx.lineWidth = Math.max(1, 0.04 * s); ctx.stroke();
+      } else {                                                    // cristal: losango que pulsa
+        const r = (0.24 + 0.03 * Math.sin(time * 6)) * s, cy = gy - 0.5 * s;
+        ctx.beginPath(); ctx.moveTo(cx, cy - r * 1.4); ctx.lineTo(cx + r, cy); ctx.lineTo(cx, cy + r * 1.4); ctx.lineTo(cx - r, cy); ctx.closePath();
+        ctx.fillStyle = '#7dfcff'; ctx.fill();
+        ctx.strokeStyle = '#fff'; ctx.lineWidth = Math.max(1, 0.03 * s); ctx.stroke();
+      }
+    }
+    ctx.globalAlpha = 1;
+
+    // luz sob o carro e chamas do escapamento, desenhadas aqui para o SVG do carro ficar parado
+    const sc = f / Z_CAR, [carPx, carGy] = P(G.carX, 0, Z_CAR);
+    ctx.fillStyle = `rgba(${rgb},.3)`;
+    ctx.beginPath(); ctx.ellipse(carPx, carGy - 0.02 * sc, 0.5 * sc, 0.06 * sc, 0, 0, TAU); ctx.fill();
+    if (speedN > 0.2) {
+      const len = (0.08 + speedN * 0.22 * (0.7 + Math.random() * 0.6)) * sc;
+      ctx.fillStyle = `rgba(${rgb},.9)`;
+      for (const dx of [-0.18, 0.18]) {
+        const fx = carPx + dx * sc;
+        ctx.beginPath(); ctx.moveTo(fx - 0.03 * sc, carGy - 0.07 * sc); ctx.lineTo(fx + 0.03 * sc, carGy - 0.07 * sc); ctx.lineTo(fx, carGy - 0.07 * sc + len); ctx.fill();
       }
     }
 
-    // placas com as fórmulas do movimento, de um lado e do outro
-    const SPACING = 70;
-    for (let n = Math.ceil((roadDist + 150) / SPACING); n * SPACING - roadDist > zN + 0.4; n--) {
-      const z = n * SPACING - roadDist, side = n % 2 ? 1 : -1, px = (0.3 * f) / z;
-      if (px < 6) continue;
-      const alpha = clamp(1.3 - z / 120), text = SIGNS[((n % SIGNS.length) + SIGNS.length) % SIGNS.length];
-      const foot = P(side * (RW + 1.25), 0, z), head = P(side * (RW + 1.25), 1.05, z);
-      ctx.strokeStyle = `rgba(${rgb},${alpha.toFixed(3)})`;
-      ctx.lineWidth = Math.max(1, px * 0.08);
-      line(foot, head);
-      ctx.font = `italic ${px.toFixed(1)}px Georgia, 'Times New Roman', serif`;
-      const tw = ctx.measureText(text).width + px * 1.3, th = px * 1.9;
-      ctx.fillStyle = `rgba(6,7,16,${(alpha * 0.86).toFixed(3)})`;
-      ctx.fillRect(head[0] - tw / 2, head[1] - th, tw, th);
-      ctx.strokeRect(head[0] - tw / 2, head[1] - th, tw, th);
-      ctx.fillStyle = `rgba(255,255,255,${alpha.toFixed(3)})`;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText(text, head[0], head[1] - th / 2);
+    // carro: só transformações, que o navegador resolve sem redesenhar
+    const lean = clamp((G.targetX - G.carX) * 9, -8, 8);
+    const shake = still ? 0 : Math.sin(time * 40) * speedN * 1.6;
+    car.style.transform = `translate3d(${(((G.carX * f) / Z_CAR - mouse.x * W * 0.02) / G.k).toFixed(1)}px,${shake.toFixed(1)}px,0) rotate(${lean.toFixed(2)}deg)`;
+
+    // painel: atualizado poucas vezes por segundo, para não refazer o layout a cada quadro
+    if (++G.hudTick % 6 === 0) {
+      const beta = Math.min(0.9999, speedN * 0.9999);
+      if (G.state === 'playing') gui.score.textContent = nf.format(Math.floor(G.dist / 3) + G.bonus);
+      gui.speed.textContent = beta.toFixed(2).replace('.', ',') + ' c';
     }
-
-    // carro: o mouse dirige; trepida mais quanto mais rápido
-    const targetX = mouse.x * Math.min(vw * 0.17, 230);
-    const lean = clamp((targetX - carX) * 0.05, -7, 7);
-    carX = lerp(carX, targetX, 0.07);
-    const shake = still ? 0 : Math.sin(time * 38) * rp * 2.2 + Math.sin(time * 5.3) * 1.2;
-    car.style.transform = `translate3d(${carX.toFixed(1)}px,${shake.toFixed(1)}px,0) rotate(${lean.toFixed(2)}deg)`;
-    car.style.setProperty('--fire', (rp * 5 * (still ? 1 : 0.75 + Math.random() * 0.5)).toFixed(2));
-
-    // painel: de 60 km/h até muito perto da velocidade da luz, em escala logarítmica
-    const kmh = 60 * Math.pow(C_KMH / 60, rp), beta = Math.min(kmh / C_KMH, 0.99995);
-    const gamma = 1 / Math.sqrt(1 - beta * beta);
-    if (kmh < 1e6) { rd.v.textContent = nf.format(kmh); rd.u.textContent = 'km/h'; }
-    else { rd.v.textContent = beta.toFixed(5).replace('.', ','); rd.u.textContent = 'c'; }
-    rd.g.textContent = gamma.toFixed(4).replace('.', ',');
-    const left = TRIP_KM * (1 - rp);
-    rd.d.textContent = rp >= 0.985 ? 'Destino: Contato' : `Destino: Contato, faltam ${nf.format(left)} km`;
-    rd.bar.style.width = (rp * 100).toFixed(1) + '%';
-    road.classList.toggle('arrived', rp >= 0.985);
-    road.style.setProperty('--flash', (clamp((rp - 0.9) / 0.1) ** 3 * 0.85).toFixed(3));
   }
 
   // ================================================================== quadro a quadro
@@ -909,11 +1115,14 @@
     const accent = `rgb(${col[0]} ${col[1]} ${col[2]})`;
     if (accent !== lastAccent) { lastAccent = accent; root.style.setProperty('--accent', accent); }
     setActive(Math.round(f));
-    if (hudData) hudData.textContent = `x ${mouse.x >= 0 ? '+' : ''}${mouse.x.toFixed(2)}  y ${mouse.y >= 0 ? '+' : ''}${mouse.y.toFixed(2)}`;
+    if (hudData) {
+      const readout = `x ${mouse.x >= 0 ? '+' : ''}${mouse.x.toFixed(2)}  y ${mouse.y >= 0 ? '+' : ''}${mouse.y.toFixed(2)}`;
+      if (readout !== lastReadout) { lastReadout = readout; hudData.textContent = readout; }
+    }
 
     scrollEffects(time);
     if (system && scrollSmooth < vh * 1.3) updateSystem(dt);
-    updateRoad(dt, time);
+    updateGame(dt, time);
 
     // salto da página inicial para o portfólio: 0 parado, 1 no fim (quando a página troca)
     let jump = 0;
@@ -927,8 +1136,8 @@
       const intro = still ? 1 : clamp((ms - introStart) / 2600);
       const wide = vw > 900;
       const scrollUnits = (scrollSmooth / vh) * 0.25;
-      // quanto a estrada pesa neste instante (1 no meio dela)
-      const onRoad = ROAD < 0 ? 0 : clamp(1 - Math.abs(f - ROAD));
+      const onGame = GAME < 0 ? 0 : clamp(1 - Math.abs(f - GAME));       // quanto o jogo pesa neste instante
+      const gameSpeed = G.speed / MAX_SPEED;
       const hp = hub ? clamp(scrollSmooth / (vh * 0.62)) : 0;
 
       gl.viewport(0, 0, canvas.width, canvas.height);
@@ -947,7 +1156,7 @@
       gl.uniform1f(prog.show.u.uFade, ease(clamp(intro * 2)) * (1 - jump * jump * jump));
       gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
 
-      // 2. estrelas de fundo: afastam-se com a velocidade da rolagem e na estrada
+      // 2. estrelas de fundo: afastam-se com a velocidade da rolagem e do carro
       gl.enable(gl.BLEND);
       gl.useProgram(prog.stars.p);
       attributes([[buffers.starPos, 3], [buffers.starLook, 3]]);
@@ -955,7 +1164,7 @@
       gl.uniform1f(prog.stars.u.uScroll, scrollUnits);
       gl.uniform1f(prog.stars.u.uTime, time);
       gl.uniform1f(prog.stars.u.uPx, dpr);
-      gl.uniform1f(prog.stars.u.uWarp, Math.max(jump, velocity * 0.3 + onRoad * rp * rp * 0.45));
+      gl.uniform1f(prog.stars.u.uWarp, Math.max(jump, velocity * 0.3 + onGame * gameSpeed * gameSpeed * 0.35));
       gl.drawArrays(gl.POINTS, 0, STARS);
 
       // 3. figura
@@ -963,10 +1172,13 @@
       let from = A.shape, to = B.shape, m = same ? 0 : mix, zoom = 1;
       if (jump > 0) { from = A.shape; to = 'cloud'; m = ease(jump); zoom = 1 + jump * jump * 2.2; }   // desfaz-se no salto
       else if (intro < 1 && f < 0.5) { from = 'cloud'; to = A.shape; m = ease(intro); }               // forma-se na abertura
-      else if (!same) zoom = 1 + Math.sin(mix * Math.PI) * 0.45;                                       // atravessa a figura ao trocar
-      // na seleção, o Sol cresce conforme a câmera mergulha; na estrada, o destino se aproxima
-      const scaleOf = (c) => (c.road ? lerp(0.26, 0.66, rp) : c === CHAPTERS[0] && hub ? c.scale * (1 + hp * 1.6) : c.scale);
+      else if (!same) zoom = 1 + Math.sin(mix * Math.PI) * 0.3;                                        // atravessa a figura ao trocar
+      // na seleção, o Sol cresce conforme a câmera mergulha; no jogo, o buraco negro cresce com a velocidade
+      const scaleOf = (c) => (c.game ? lerp(0.26, 0.5, gameSpeed) : c === CHAPTERS[0] && hub ? c.scale * (1 + hp * 1.6) : c.scale);
       const yOf = (c) => (!wide && c.ySmall !== undefined ? c.ySmall : c.y !== undefined ? c.y : wide ? 0 : 0.12);
+      const dimOf = (c) => (c.dim === undefined ? 1 : c.dim);
+      // entre duas fases com a mesma figura não há troca de forma: a cor muda por igual
+      const cA = same ? col : A.color, cB = same ? col : B.color;
       const u = prog.fig.u;
       gl.useProgram(prog.fig.p);
       attributes([[buffers[from], 3], [buffers[to], 3], [buffers.random, 4]]);
@@ -978,13 +1190,11 @@
       gl.uniform1f(u.uRip, lerp(A.rip, B.rip, mix));
       gl.uniform1f(u.uVel, velocity);
       gl.uniform1f(u.uPulseT, clamp((ms - pulse.t0) / 1400));
-      gl.uniform1f(u.uDim, (wide ? 1 : 0.9) * (1 - jump * 0.6));
+      gl.uniform1f(u.uDim, lerp(dimOf(A), dimOf(B), mix) * (wide ? 1 : 0.9) * (1 - jump * 0.6));
       gl.uniform2f(u.uRot, time * 0.06 + scrollSmooth * 0.0009 + mouse.x * 0.55, lerp(A.tilt, B.tilt, mix) - mouse.y * 0.28);
       gl.uniform2f(u.uMouse, mouse.x, mouse.y);
       gl.uniform2f(u.uOff, wide ? lerp(A.off, B.off, mix) * (1 - jump) : 0, lerp(yOf(A), yOf(B), mix));
       gl.uniform2f(u.uPulse, pulse.x, pulse.y);
-      // entre duas seções com a mesma figura não há troca de forma: a cor muda por igual
-      const cA = same ? col : A.color, cB = same ? col : B.color;
       gl.uniform3f(u.uColA, cA[0] / 255, cA[1] / 255, cA[2] / 255);
       gl.uniform3f(u.uColB, cB[0] / 255, cB[1] / 255, cB[2] / 255);
       gl.drawArrays(gl.POINTS, 0, COUNT);
@@ -1050,14 +1260,14 @@
       cursor.classList.toggle('on-link', !!e.target.closest('a, button'));
     }, { passive: true });
     (function follow() {
-      rx = lerp(rx, cx, 0.18); ry = lerp(ry, cy, 0.18);
+      rx = lerp(rx, cx, 0.22); ry = lerp(ry, cy, 0.22);
       gx = lerp(gx, cx, 0.06); gy = lerp(gy, cy, 0.06);
       ring.style.transform = `translate3d(${rx.toFixed(1)}px,${ry.toFixed(1)}px,0)`;
       if (glow) glow.style.transform = `translate3d(${gx.toFixed(1)}px,${gy.toFixed(1)}px,0)`;
       requestAnimationFrame(follow);
     })();
 
-    // cartões que se inclinam na direção do cursor
+    // miniaturas que se inclinam na direção do cursor
     $$('.tilt').forEach((el) => {
       el.addEventListener('pointermove', (e) => {
         const r = el.getBoundingClientRect();
@@ -1074,9 +1284,9 @@
     const status = $('#copy-status');
     try {
       await navigator.clipboard.writeText('luiizan12@gmail.com');
-      status.textContent = 'E-mail copiado.';
+      status.textContent = 'E-mail copiado';
     } catch {
-      status.textContent = 'Seu navegador não permitiu copiar. E-mail: luiizan12@gmail.com';
+      status.textContent = 'Não deu para copiar: luiizan12@gmail.com';
     }
   });
 
